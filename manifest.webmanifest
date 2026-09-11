@@ -1,0 +1,26 @@
+{
+  "name": "Creato’Ready",
+  "short_name": "CreatoReady",
+  "description": "Resize photos and short videos privately in your browser.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#070814",
+  "theme_color": "#10142c",
+  "categories": ["photo", "video", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
