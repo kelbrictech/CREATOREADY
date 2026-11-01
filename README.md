@@ -62,3 +62,17 @@ Provider-level request and security logs may still exist. Do not publicly promis
 - Inspect production hosting headers, network traffic, analytics settings and any provider-level logs.
 - Perform an actual video trim/crop/resize/export acceptance test in the deployed browser.
 - Confirm the responsible legal operator and an enforceable support-email retention procedure.
+
+## Video-export metadata minimization
+
+The video FFmpeg command deliberately disables copying input global metadata, stream metadata and chapter metadata with `-map_metadata -1`, `-map_metadata:s -1`, and `-map_chapters -1`. It also clears common `title` and `creation_time` fields. The normal muxer and encoder tags (such as `Lavf` and `Lavc`) can remain because they describe the processing software, and output remains subject to metadata embedded in the media bitstream or in the visible/audible content.
+
+This reduces inherited identifying tags; it **does not guarantee anonymous output**. Downloaded filenames still derive from the input filename, which users should inspect or rename before publication.
+
+### Metadata regression evidence and next browser check
+
+- The exact metadata flags were tested using local FFmpeg with the user-provided MP4 on 2026-11-01. A 1-second H.264/AAC export retained video and audio; the original numeric `title` was removed, and no `creation_time` tag appeared in the output.
+- Local FFmpeg is not the same runtime as browser FFmpeg.wasm. A fresh in-browser output must still be inspected before the production metadata behavior can be considered verified.
+- Example audit command: `ffprobe -v error -show_entries format=duration:format_tags -show_entries stream=index,codec_name,codec_type:stream_tags -of json exported.mp4`
+- Regression acceptance: valid MP4 playback, expected trim duration and crop dimensions, audio if originally present, no inherited title/creation-time metadata, and sensible download filename.
+- The FFmpeg GPL corresponding-source and license-compliance review remains open and separate from output-metadata cleanup.
