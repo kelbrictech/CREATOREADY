@@ -256,6 +256,33 @@
   .trim-help { margin:9px 0 0; color:#a9a2bd; font-size:11px; line-height:1.45; }
   .trim-error { margin:9px 0 0; color:#ffbdb6; font-size:12px; }
   .trim-error[hidden] { display:none; }
+
+.agreement-gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;overflow:auto;padding:16px;background:radial-gradient(ellipse at 25% 0%,#203b83 0%,transparent 57%),radial-gradient(ellipse at 90% 95%,#361b59 0%,transparent 42%),#070a19;color:#f6f4ff;font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
+.agreement-gate[hidden]{display:none!important}
+.agreement-card{width:min(100%,540px);margin:auto;padding:clamp(20px,5vw,32px);border-radius:23px;border:1px solid rgba(151,194,255,.29);background:linear-gradient(135deg,rgba(43,54,99,.9),rgba(19,20,44,.97));box-shadow:0 25px 75px #0008}
+.agreement-brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:800}
+.agreement-pill{margin-left:auto;color:#b5f7ce;font:700 10px ui-monospace,monospace;white-space:nowrap;border:1px solid #8de9a757;padding:6px 8px;border-radius:30px}
+.agreement-eyebrow{margin-top:22px;color:#93dcf8;font:700 11px ui-monospace,monospace;letter-spacing:.16em}
+.agreement-card h1{font-size:clamp(25px,5vw,31px);line-height:1.14;margin:10px 0;letter-spacing:-.03em}
+.agreement-card p{font-size:13px;line-height:1.55;color:#d2cde4}
+.agreement-points{list-style:none;padding:0;display:grid;gap:9px;margin:15px 0}
+.agreement-points li{font-size:13px;line-height:1.5;padding-left:29px;position:relative}
+.agreement-points li:before{content:'✓';position:absolute;left:0;top:0;color:#86e6ff}
+.agreement-disclosure{padding:12px;border:1px solid #7b9ece34;border-radius:13px;background:#080e2390}
+.agreement-card a{color:#a5efff;text-underline-offset:3px}
+.agreement-links{display:flex;flex-wrap:wrap;gap:10px 20px;margin:15px 0;font-size:13px;font-weight:600}
+.agreement-check{display:flex;align-items:flex-start;gap:11px;padding:15px 12px;border:1px solid #94b5ef63;border-radius:13px;background:#10172f99;font-size:13px;line-height:1.6;cursor:pointer}
+.agreement-check input{flex:none;margin:0;width:21px;height:21px;accent-color:#84ecff}
+.agreement-check:focus-within{outline:2px solid #9ce9ff;outline-offset:2px}
+.agreement-continue{display:block;width:100%;min-height:52px;margin:15px 0 0;border-radius:13px;background:linear-gradient(135deg,#70eaff,#b093ff,#ff9685);font-size:15px;font-weight:800;color:#11162f;cursor:pointer}
+.agreement-continue:disabled{opacity:.42;cursor:not-allowed;filter:grayscale(.65)}
+.agreement-decline{display:block;width:max-content;max-width:100%;margin:14px auto;text-align:center;font-size:12px}
+.agreement-card .agreement-footnote{text-align:center;color:#b5b0c9;font-size:11px;margin-bottom:0}
+body.agreement-required{overflow:hidden}
+.agreement-gate a:focus-visible,.agreement-continue:focus-visible,.upload-zone:focus-visible{outline:3px solid #b4f2ff;outline-offset:3px}
+@media(max-width:430px){.agreement-gate{padding:9px;align-items:flex-start}.agreement-card{padding:20px;border-radius:18px}.agreement-eyebrow{margin-top:14px}}
+@media(max-height:710px){.agreement-gate{align-items:flex-start}}
+
   .privacy-link { text-decoration:none; }
   .privacy-link:hover, .legal-nav a:hover { color:#b7f6ff; text-decoration:underline; }
   .privacy-link:focus-visible, .legal-nav a:focus-visible { outline:2px solid #6deaff; outline-offset:3px; }
@@ -268,8 +295,28 @@
   }
 </style>
 </head>
-<body>
-<div>
+<body class="agreement-required">
+
+<section class="agreement-gate" id="agreementGate" role="dialog" aria-modal="true" aria-labelledby="agreementTitle" aria-describedby="agreementSummary">
+ <div class="agreement-card">
+  <div class="agreement-brand"><img src="./assets/embedded-2.webp" alt="" width="32" height="32"> CREATO’READY <span class="agreement-pill">FREE · NO ADS</span></div>
+  <div class="agreement-eyebrow">BEFORE YOU BEGIN</div>
+  <h1 id="agreementTitle">A quick agreement before editing.</h1>
+  <p id="agreementSummary">Crop, resize, and trim photos or videos directly in your browser. No account is required. Please review the conditions of this free service.</p>
+  <ul class="agreement-points">
+   <li>Your selected media is processed locally; the editor does not upload it.</li>
+   <li>You are responsible for your content and its lawful publication.</li>
+   <li>Exports depend on device resources, browser support and media formats.</li>
+  </ul>
+  <p class="agreement-disclosure">Hosting and video-engine providers may receive ordinary technical connection information. See the <a href="./privacy.html" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.</p>
+  <nav class="agreement-links" aria-label="Policies to review"><a href="./terms.html" target="_blank" rel="noopener noreferrer">Read Terms of Use</a><a href="./privacy.html" target="_blank" rel="noopener noreferrer">Read Privacy Notice</a></nav>
+  <label class="agreement-check" for="agreementCheck"><input type="checkbox" id="agreementCheck"><span>I have read and agree to the Terms of Use (version TERMS-1.0), linked above.</span></label>
+  <button type="button" id="agreementContinue" class="agreement-continue" disabled>Agree &amp; Continue</button>
+  <a class="agreement-decline" href="./legal.html">I don't agree — view legal information</a>
+  <p class="agreement-footnote">Acceptance is remembered only for this browser session when supported. We do not create a server-side acceptance record.</p>
+ </div>
+</section>
+<div id="editorApp" inert>
   <main class="phone" aria-label="Creato’Ready media resizing tool">
     <div class="bg"></div>
     <div class="app-shell">
@@ -290,7 +337,7 @@
         <div class="eyebrow mono">STEP 1 OF 4</div>
         <h1>Choose your media.</h1>
         <p class="lede">Start with one photo or video. It stays in your browser.</p>
-        <label class="glass upload-zone" for="mediaInput">
+        <label class="glass upload-zone" for="mediaInput" tabindex="0" role="button">
           <span class="upload-orb" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#bff7ff" stroke-width="1.8"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg></span>
           <span class="upload-title">Tap to choose a file</span>
           <span class="upload-note">MP4, MOV, JPG or PNG<br>photos and short videos recommended</span>
@@ -371,6 +418,32 @@
 
 <script src="./vendor/ffmpeg/ffmpeg.js"></script>
 <script>
+
+  const TERMS_VERSION='TERMS-1.0';
+  const ACCEPTANCE_KEY='creatoready:accepted-terms';
+  let agreementAccepted=false;
+  const agreementGate=document.getElementById('agreementGate');
+  const editorApp=document.getElementById('editorApp');
+  const agreementCheck=document.getElementById('agreementCheck');
+  const agreementContinue=document.getElementById('agreementContinue');
+  function setAgreementAccess(allowed){
+    agreementAccepted=allowed;
+    editorApp.inert=!allowed;
+    agreementGate.hidden=allowed;
+    document.body.classList.toggle('agreement-required',!allowed);
+    if(!allowed)agreementCheck.focus();
+  }
+  agreementCheck.addEventListener('change',()=>{agreementContinue.disabled=!agreementCheck.checked;});
+  agreementContinue.addEventListener('click',()=>{
+    if(!agreementCheck.checked)return;
+    try{sessionStorage.setItem(ACCEPTANCE_KEY,TERMS_VERSION);}catch(e){console.info('Session storage unavailable; acceptance applies to this page only.',e);}
+    setAgreementAccess(true);
+    document.querySelector('.upload-zone').focus();
+  });
+  let previouslyAccepted=false;
+  try{previouslyAccepted=sessionStorage.getItem(ACCEPTANCE_KEY)===TERMS_VERSION;}catch(e){console.info('Session storage unavailable; acceptance required.',e);}
+  setAgreementAccess(previouslyAccepted);
+
   const input=document.getElementById('mediaInput');
   const stages=[...document.querySelectorAll('.stage')];
   const bars=[...document.querySelectorAll('.progress i')];
@@ -427,6 +500,7 @@ function constrainFrame(){
   }
 
 input.addEventListener('change',()=>{
+    if(!agreementAccepted){input.value='';return;}
     file=input.files?.[0];if(!file)return;
     if(!file.type.startsWith('video/')&&!file.type.startsWith('image/')){alert('Choose an image or video file.');input.value='';return;}
     clearResult();if(url)URL.revokeObjectURL(url);
@@ -581,8 +655,12 @@ function showReview(message='Returned to export review'){
     document.querySelector('.processing-orb svg').style.animation='';
     acknowledge(message);
   }
-  async function startProcessing(){if(!file||processing)return;acknowledge('Export started');clearResult();cancelRequested=false;processing=true;const stage=stages[3];stage.classList.add('processing');document.getElementById('processingError').classList.remove('show');document.getElementById('processingDone').style.display='none';document.getElementById('changeAfterProcessing').style.display='none';document.getElementById('cancelProcessing').style.display='inline-block';document.querySelector('.processing-orb svg').style.animation='';try{const result=mediaType==='video'?await processVideo():await processImage();if(!cancelRequested)showResult(result);}catch(error){if(error?.name==='AbortError'||cancelRequested)return;processing=false;document.querySelector('.processing-orb svg').style.animation='none';document.getElementById('processingTitle').textContent='Export could not be completed';setProgress(0,'Needs attention','Your original file is unchanged');const box=document.getElementById('processingError');box.textContent=error?.message||'An unexpected processing error occurred.';box.classList.add('show');document.getElementById('cancelProcessing').textContent='Return and try again';}finally{if(!cancelRequested)processing=false;}}
+  async function startProcessing(){if(!agreementAccepted||!file||processing)return;acknowledge('Export started');clearResult();cancelRequested=false;processing=true;const stage=stages[3];stage.classList.add('processing');document.getElementById('processingError').classList.remove('show');document.getElementById('processingDone').style.display='none';document.getElementById('changeAfterProcessing').style.display='none';document.getElementById('cancelProcessing').style.display='inline-block';document.querySelector('.processing-orb svg').style.animation='';try{const result=mediaType==='video'?await processVideo():await processImage();if(!cancelRequested)showResult(result);}catch(error){if(error?.name==='AbortError'||cancelRequested)return;processing=false;document.querySelector('.processing-orb svg').style.animation='none';document.getElementById('processingTitle').textContent='Export could not be completed';setProgress(0,'Needs attention','Your original file is unchanged');const box=document.getElementById('processingError');box.textContent=error?.message||'An unexpected processing error occurred.';box.classList.add('show');document.getElementById('cancelProcessing').textContent='Return and try again';}finally{if(!cancelRequested)processing=false;}}
   document.getElementById('confirmBtn').addEventListener('click',startProcessing);
+  document.querySelector('.upload-zone').addEventListener('keydown',event=>{
+    if(!agreementAccepted)return;
+    if(event.key==='Enter'||event.key===' '){event.preventDefault();input.click();}
+  });
   document.getElementById('cancelProcessing').addEventListener('click',()=>showReview(processing?'Processing cancelled':'Returned to export review'));
   document.getElementById('changeAfterProcessing').addEventListener('click',()=>showReview());
   document.getElementById('processingDone').addEventListener('click',()=>{if(!resultBlob)return;const a=document.createElement('a');a.href=resultUrl;a.download=resultName;document.body.appendChild(a);a.click();a.remove();acknowledge('Download started');});

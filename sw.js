@@ -1,11 +1,12 @@
-const CACHE_VERSION = 'creatoready-v3';
+const CACHE_VERSION = 'creatoready-v4';
 const base = new URL('./', self.registration.scope);
 const appURL = path => new URL(path,base).href;
 const SHELL = [
   '', 'index.html', 'manifest.webmanifest',
   'assets/embedded-1.webp', 'assets/embedded-2.webp', 'assets/embedded-3.png',
   'icons/icon-192.png', 'icons/icon-512.png',
-  'vendor/ffmpeg/ffmpeg.js', 'vendor/ffmpeg/814.ffmpeg.js'
+  'vendor/ffmpeg/ffmpeg.js', 'vendor/ffmpeg/814.ffmpeg.js',
+  'legal.css', 'legal.html', 'terms.html', 'privacy.html', 'cookies.html', 'copyright.html', 'accessibility.html', 'licenses.html'
 ].map(appURL);
 const FFMPEG_CDN = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/';
 
@@ -26,9 +27,13 @@ self.addEventListener('fetch', event => {
   if(!local && !core)return;
   if(event.request.mode === 'navigate'){
     event.respondWith(fetch(event.request).then(response => {
-      if(response.ok)caches.open(CACHE_VERSION).then(cache => cache.put(appURL('index.html'),response.clone()));
+      if(response.ok)caches.open(CACHE_VERSION).then(cache => cache.put(event.request,response.clone())).catch(()=>{});
       return response;
-    }).catch(() => caches.match(appURL('index.html'))));
+    }).catch(async () => {
+      const cached=await caches.match(event.request);
+      if(cached)return cached;
+      return new Response('This page is unavailable offline. Reconnect and try again.', {status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});
+    }));
     return;
   }
   event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
