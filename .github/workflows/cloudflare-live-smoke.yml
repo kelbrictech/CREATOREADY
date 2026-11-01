@@ -1,0 +1,21 @@
+name: Cloudflare live access smoke test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Probe public Cloudflare endpoints without any secrets
+        run: node --test tests/cloudflare-live-smoke.test.mjs
