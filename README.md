@@ -97,3 +97,19 @@ node --test tests/ffmpeg-security.test.mjs
 **Browser reproduction (Chromium):** under the old CSP, importing a `blob:` core script via `importScripts` failed and `WebAssembly.Module` was blocked. With `blob:` and `'wasm-unsafe-eval'`, both operations passed. This isolates the relevant security-policy restrictions but is not an end-to-end run of the full ~32 MB FFmpeg.wasm core.
 
 **After Cloudflare deployment:** hard-refresh the site, check response headers (especially CSP), and export a short video. Confirm the video engine loads, then inspect duration, cropping, AAC sound when available, and output metadata. GitHub Pages build success does not prove a separate Cloudflare Workers deployment or that Cloudflare's currently active response headers were updated.
+
+## Completed export UX
+
+- Completion state now replaces the animated circular-arrow graphic with a checkmark. Errors use a separate error symbol.
+- Before download: **Download edited media**, **Edit another file**, and **Change settings**.
+- After download is requested: **Edit another file** becomes primary, with **Download again** retained. The message says “Download requested” because the application cannot verify whether the user saved it.
+- Edit another file clears the prior input, revokes temporary preview/output object URLs, resets crop and trim choices, and returns to step one. It retains the already accepted Terms for the current browser session.
+- The processing panel scrolls on short/mobile viewports to keep follow-up actions accessible.
+
+### Completion regression checklist
+
+1. On successful export, confirm spinner removed and checkmark shown at 100%.
+2. Download, confirm **Edit another file** becomes primary and **Download again** works.
+3. Edit another file, verify clean first step, same-file reupload works, old preview is gone.
+4. Change settings after success, confirm source remains available.
+5. Trigger export error, confirm error symbol and retry path.

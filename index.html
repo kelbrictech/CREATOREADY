@@ -229,13 +229,28 @@
   .stage.processing > :not(#processingPanel) { display:none; }
   .stage.processing #processingPanel { display:flex; }
   .processing-orb { width:76px; height:76px; margin:0 auto 22px; border-radius:25px; display:grid; place-items:center; background:linear-gradient(145deg,rgba(86,227,255,.27),rgba(146,89,255,.3)); border:1px solid rgba(255,255,255,.28); box-shadow:0 18px 40px rgba(70,55,180,.34); }
-  .processing-orb svg { animation:spin 1.4s linear infinite; }
+  .processing-orb .loading-icon { animation:spin 1.4s linear infinite; }
+  .processing-orb .success-icon,.processing-orb .error-icon { display:none; }
+  .stage.processing.is-complete .processing-orb .loading-icon,.stage.processing.is-error .processing-orb .loading-icon { display:none; }
+  .stage.processing.is-complete .processing-orb .success-icon { display:block; }
+  .stage.processing.is-error .processing-orb .error-icon { display:block; }
   @keyframes spin { to { transform:rotate(360deg); } }
   .processing-track { height:12px; margin:28px 0 12px; overflow:hidden; border-radius:99px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.1); }
   .processing-fill { width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#62eaff,#a981ff,#ff8f78); box-shadow:0 0 18px rgba(119,132,255,.65); transition:width .28s ease; }
   .processing-meta { display:flex; justify-content:space-between; color:#aaa4b8; font-size:12px; }
   .processing-meta strong { color:#f5f1ff; }
   .complete-action { display:none; }
+  .stage.processing #processingPanel { justify-content:flex-start; overflow-y:auto; min-height:0; padding:12px 1px 26px; scrollbar-width:thin; }
+  .stage.processing .processing-orb { flex-shrink:0; margin-bottom:15px; }
+  .stage.processing #processingPanel .primary { margin-top:11px; flex-shrink:0; }
+  .stage.processing .processing-track { margin-top:20px; }
+  .stage.processing .result-preview { flex-shrink:1; max-height:260px; margin-top:14px; }
+  .stage.processing .result-preview img,.stage.processing .result-preview video { max-height:258px; }
+  .next-edit-action { display:none; width:100%; min-height:48px; flex-shrink:0; margin-top:9px; padding:10px 14px; border-radius:14px; background:rgba(109,232,255,.12); border:1px solid rgba(111,232,255,.45); color:#e5faff; font-weight:700; cursor:pointer; }
+  .next-edit-action:focus-visible { outline:3px solid #96ebff; outline-offset:2px; }
+  .stage.processing .next-edit-action.primary { background:linear-gradient(135deg,#69e8ff,#b18aff,#ff937b); color:#11142a; }
+  .stage.processing #processingDone.text-action { align-self:center; width:auto; min-height:32px; margin:7px auto 0; padding:7px; background:none; color:#b7eaff; border:none; box-shadow:none; font-size:12px; }
+  @media(max-width:430px){.stage.processing .result-preview{max-height:205px}.stage.processing .result-preview img,.stage.processing .result-preview video{max-height:203px}}
   .result-preview { display:none; width:100%; max-height:300px; margin:18px auto 4px; overflow:hidden; border-radius:18px; background:#090914; border:1px solid rgba(255,255,255,.14); }
   .result-preview img,.result-preview video { display:block; width:100%; max-height:300px; object-fit:contain; }
   .processing-error { display:none; margin-top:18px; padding:14px; border-radius:14px; color:#ffd5cc; background:rgba(128,36,45,.28); border:1px solid rgba(255,132,112,.32); font-size:12px; line-height:1.45; }
@@ -393,7 +408,11 @@ body.agreement-required{overflow:hidden}
         <div class="prototype-note" id="privacyNote">Processing happens in this browser. Video export loads the processing engine on first use.</div>
         <button class="primary" id="confirmBtn">Create resized media</button>
         <div id="processingPanel" aria-live="polite">
-          <div class="processing-orb"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#bff7ff" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/></svg></div>
+          <div class="processing-orb" aria-hidden="true">
+ <svg class="loading-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#bff7ff" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/></svg>
+ <svg class="success-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#b6ffdb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6"/></svg>
+ <svg class="error-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffbcb6" stroke-width="2.5" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/></svg>
+ </div>
           <div class="eyebrow mono">LOCAL PROCESSING</div>
           <h1 id="processingTitle">Preparing your media…</h1>
           <p class="lede" id="processingStatus" style="margin-left:auto;margin-right:auto">Reading the selected format</p>
@@ -403,6 +422,7 @@ body.agreement-required{overflow:hidden}
           <div class="processing-error" id="processingError"></div>
           <button class="text-action" id="cancelProcessing">Cancel and return</button>
           <button class="primary complete-action" id="processingDone">Download edited media</button>
+          <button class="next-edit-action complete-action" id="editAnotherBtn">Edit another file</button>
           <button class="text-action complete-action" id="changeAfterProcessing">Change settings</button>
         </div>
       </section>
@@ -645,21 +665,74 @@ async function processVideo(){
       }
     }
   }
-  function showResult(result){resultBlob=result.blob;resultName=(file.name.replace(/\.[^.]+$/,'')||'creatoready')+'-'+format.replace(':','x')+'.'+result.extension;resultUrl=URL.createObjectURL(resultBlob);const preview=document.getElementById('resultPreview');const el=document.createElement(mediaType==='video'?'video':'img');el.src=resultUrl;if(el.tagName==='VIDEO'){el.controls=true;el.playsInline=true;}el.alt='Processed '+resultName;preview.replaceChildren(el);preview.style.display='block';setProgress(100,'Complete','Your resized media is ready to download');document.getElementById('processingTitle').textContent='Your media is ready.';document.querySelector('.processing-orb svg').style.animation='none';document.getElementById('cancelProcessing').style.display='none';document.getElementById('processingDone').style.display='block';document.getElementById('changeAfterProcessing').style.display='block';acknowledge('Resized media created');}
-function showReview(message='Returned to export review'){
-    cancelRequested=true;if(processing&&ffmpeg)resetEngine();processing=false;
-    const stage=stages[3];stage.classList.remove('processing');
+
+  function showResult(result){
+    resultBlob=result.blob;
+    resultName=(file.name.replace(/\.[^.]+$/,'')||'creatoready')+'-'+format.replace(':','x')+'.'+result.extension;
+    resultUrl=URL.createObjectURL(resultBlob);
+    const preview=document.getElementById('resultPreview');
+    const el=document.createElement(mediaType==='video'?'video':'img');
+    el.src=resultUrl;
+    if(el.tagName==='VIDEO'){el.controls=true;el.playsInline=true;}
+    el.alt='Processed '+resultName;
+    preview.replaceChildren(el);
+    preview.style.display='block';
+    setProgress(100,'Complete','Your edited media is ready to download.');
+    document.getElementById('processingTitle').textContent='Your media is ready.';
+    const stage=stages[3];stage.classList.add('is-complete');stage.classList.remove('is-error');
+    document.getElementById('cancelProcessing').style.display='none';
+    const download=document.getElementById('processingDone');
+    download.style.display='block';download.textContent='Download edited media';download.className='primary complete-action';
+    const next=document.getElementById('editAnotherBtn');
+    next.style.display='block';next.className='next-edit-action complete-action';
+    document.getElementById('changeAfterProcessing').style.display='block';
+    acknowledge('Edited media created');
+  }
+  function showReview(message='Returned to export review'){
+    cancelRequested=true;
+    if(processing&&ffmpeg)resetEngine();
+    processing=false;
+    const stage=stages[3];stage.classList.remove('processing','is-complete','is-error');
     setProgress(0,'Preparing','Reading the selected format');
     document.getElementById('processingDone').style.display='none';
+    document.getElementById('editAnotherBtn').style.display='none';
     document.getElementById('changeAfterProcessing').style.display='none';
     document.getElementById('cancelProcessing').style.display='inline-block';
     document.getElementById('cancelProcessing').textContent='Cancel and return';
     document.getElementById('processingTitle').textContent='Preparing your media…';
     document.getElementById('processingError').classList.remove('show');
-    document.querySelector('.processing-orb svg').style.animation='';
     acknowledge(message);
   }
-  async function startProcessing(){if(!agreementAccepted||!file||processing)return;acknowledge('Export started');clearResult();cancelRequested=false;processing=true;const stage=stages[3];stage.classList.add('processing');document.getElementById('processingError').classList.remove('show');document.getElementById('processingDone').style.display='none';document.getElementById('changeAfterProcessing').style.display='none';document.getElementById('cancelProcessing').style.display='inline-block';document.querySelector('.processing-orb svg').style.animation='';try{const result=mediaType==='video'?await processVideo():await processImage();if(!cancelRequested)showResult(result);}catch(error){if(error?.name==='AbortError'||cancelRequested)return;processing=false;document.querySelector('.processing-orb svg').style.animation='none';document.getElementById('processingTitle').textContent='Export could not be completed';setProgress(0,'Needs attention','Your original file is unchanged');const box=document.getElementById('processingError');box.textContent=error?.message||'An unexpected processing error occurred.';box.classList.add('show');document.getElementById('cancelProcessing').textContent='Return and try again';}finally{if(!cancelRequested)processing=false;}}
+  function startNewEdit(){
+    if(!agreementAccepted||processing)return;
+    clearResult();
+    if(url){URL.revokeObjectURL(url);url='';}
+    if(ffmpeg)resetEngine();
+    input.value='';file=null;duration=0;sourceWidth=0;sourceHeight=0;probeReady=false;
+    mediaType='image';zoom=1;x=0;y=0;savedCrop=null;
+    ratio='9/16';format='9:16';destination='Reels, TikTok or Shorts';
+    destinations.forEach((item,index)=>{item.classList.toggle('selected',index===0);item.setAttribute('aria-checked',index===0?'true':'false');});
+    document.getElementById('previewBtn').textContent='Preview for Reels';
+    document.getElementById('previewBtn').disabled=true;
+    cropWindow.querySelectorAll('img,video').forEach(el=>el.remove());
+    document.getElementById('sourceThumb').replaceChildren();
+    document.getElementById('finalThumb').replaceChildren();
+    document.getElementById('sourceName').textContent='Your media';
+    document.getElementById('sourceMeta').textContent='Ready for framing';
+    document.getElementById('trimPanel').classList.remove('show');
+    document.getElementById('processingDone').style.display='none';
+    document.getElementById('editAnotherBtn').style.display='none';
+    document.getElementById('changeAfterProcessing').style.display='none';
+    document.getElementById('cancelProcessing').textContent='Cancel and return';
+    document.getElementById('processingError').classList.remove('show');
+    stages[3].classList.remove('processing','is-complete','is-error');
+    setProgress(0,'Preparing','Reading the selected format');
+    document.getElementById('processingTitle').textContent='Preparing your media…';
+    goTo(1);
+    document.querySelector('.upload-zone').focus();
+    acknowledge('Ready for another file');
+  }
+  async function startProcessing(){if(!agreementAccepted||!file||processing)return;acknowledge('Export started');clearResult();cancelRequested=false;processing=true;const stage=stages[3];stage.classList.add('processing');stage.classList.remove('is-complete','is-error');document.getElementById('processingError').classList.remove('show');document.getElementById('processingDone').style.display='none';document.getElementById('editAnotherBtn').style.display='none';document.getElementById('changeAfterProcessing').style.display='none';document.getElementById('cancelProcessing').style.display='inline-block';try{const result=mediaType==='video'?await processVideo():await processImage();if(!cancelRequested)showResult(result);}catch(error){if(error?.name==='AbortError'||cancelRequested)return;processing=false;stage.classList.add('is-error');stage.classList.remove('is-complete');document.getElementById('processingTitle').textContent='Export could not be completed';setProgress(0,'Needs attention','Your original file is unchanged');const box=document.getElementById('processingError');box.textContent=error?.message||'An unexpected processing error occurred.';box.classList.add('show');document.getElementById('cancelProcessing').textContent='Return and try again';}finally{if(!cancelRequested)processing=false;}}
   document.getElementById('confirmBtn').addEventListener('click',startProcessing);
   document.querySelector('.upload-zone').addEventListener('keydown',event=>{
     if(!agreementAccepted)return;
@@ -667,7 +740,17 @@ function showReview(message='Returned to export review'){
   });
   document.getElementById('cancelProcessing').addEventListener('click',()=>showReview(processing?'Processing cancelled':'Returned to export review'));
   document.getElementById('changeAfterProcessing').addEventListener('click',()=>showReview());
-  document.getElementById('processingDone').addEventListener('click',()=>{if(!resultBlob)return;const a=document.createElement('a');a.href=resultUrl;a.download=resultName;document.body.appendChild(a);a.click();a.remove();acknowledge('Download started');});
+  document.getElementById('processingDone').addEventListener('click',()=>{
+    if(!resultBlob||!agreementAccepted)return;
+    const a=document.createElement('a');a.href=resultUrl;a.download=resultName;document.body.appendChild(a);a.click();a.remove();
+    setProgress(100,'Complete','Download requested. Check your browser downloads, or edit another file.');
+    const download=document.getElementById('processingDone');
+    download.textContent='Download again';download.className='text-action complete-action';
+    const next=document.getElementById('editAnotherBtn');
+    next.className='primary next-edit-action complete-action';next.focus();
+    acknowledge('Download requested');
+  });
+  document.getElementById('editAnotherBtn').addEventListener('click',startNewEdit);
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(error=>console.warn('Offline support unavailable:',error)));}
 </script>
 </body>
