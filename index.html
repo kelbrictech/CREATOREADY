@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script>if(location.hostname==='kelbrictech.github.io'){location.replace('https://creatoready.arjayb-fb.workers.dev/');}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#10142c">
@@ -848,7 +849,19 @@ async function processVideo(){
     acknowledge('Download requested');
   });
   document.getElementById('editAnotherBtn').addEventListener('click',startNewEdit);
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(error=>console.warn('Offline support unavailable:',error)));}
+// Access is verified server-side. Offline cached pages must not bypass expiry.
+if('serviceWorker' in navigator) {
+  window.addEventListener('load',async()=>{
+    try {
+      const registrations=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.filter(r=>r.scope.startsWith(location.origin+'/')).map(r=>r.unregister()));
+      if('caches' in window) {
+        const names=await caches.keys();
+        await Promise.all(names.filter(k=>k.startsWith('creatoready-')).map(k=>caches.delete(k)));
+      }
+    }catch(error){console.warn('Legacy offline cache cleanup unavailable:',error);}
+  });
+}
 </script>
 </body>
 </html>

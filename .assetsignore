@@ -1,0 +1,14 @@
+.git/
+.github/
+node_modules/
+worker/
+tests/
+README.md
+wrangler.jsonc
+package.json
+package-lock.json
+.assetsignore
+.dev.vars
+.env
+.env.*
+*.map

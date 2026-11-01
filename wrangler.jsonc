@@ -1,0 +1,11 @@
+{
+  "name": "creatoready",
+  "main": "worker/access.mjs",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  }
+}
