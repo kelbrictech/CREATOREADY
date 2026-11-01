@@ -113,3 +113,12 @@ node --test tests/ffmpeg-security.test.mjs
 3. Edit another file, verify clean first step, same-file reupload works, old preview is gone.
 4. Change settings after success, confirm source remains available.
 5. Trigger export error, confirm error symbol and retry path.
+
+## Drag-and-drop upload
+
+- On desktop, drag one photo or video from the local filesystem anywhere into CREATO’READY. A highlighted drop overlay appears; releasing the file uses the **same** file validation and metadata-preview flow as the chooser.
+- Drag/drop cannot bypass the mandatory Terms acceptance gate, and it is disabled while an export is running. File drops are prevented from navigating the browser away from the application.
+- Multiple dropped files and unsupported media show a visible error. The app ignores stale metadata events if a second file replaces the first.
+- Dragging a new file during review or after successful export resets the previous editing session and starts a new file. The Terms acceptance is retained for the current session.
+- Click, Enter, Space and mobile tap file-selection methods remain available.
+- Browser checks: drag a valid MP4 to upload, select an image by clicking, drop unsupported text, drop multiple files, try drop before agreeing, try drop during export, replace the current source by dropping again, confirm drop indicator hides on leaving the window, and confirm dropped files never navigate away.
