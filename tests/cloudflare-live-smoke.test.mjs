@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-const BASE = 'https://creatoready.arjayb-fb.workers.dev';
+const BASE = 'https://creatoready.kelbrictech.workers.dev';
 const EXPECTED = [
   ['direct editor must be denied', '/', 401],
   ['HTML source must be denied', '/index.html', 401],

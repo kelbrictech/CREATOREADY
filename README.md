@@ -125,9 +125,9 @@ node --test tests/ffmpeg-security.test.mjs
 
 ## Cloudflare Workers: protected X entry and 24-hour access
 
-Deployment uses `worker/access.mjs` and `wrangler.jsonc`, with `assets.run_worker_first=true` to authenticate every editor and vendor asset request before it is returned. The Worker name is `creatoready` to match the existing `creatoready.arjayb-fb.workers.dev` hostname.
+Deployment uses `worker/access.mjs` and `wrangler.jsonc`, with `assets.run_worker_first=true` to authenticate every editor and vendor asset request before it is returned. The Worker name is `creatoready` to match the existing `creatoready.kelbrictech.workers.dev` hostname.
 
-- Publish one stable shared link in your X post: `https://creatoready.arjayb-fb.workers.dev/x/<ACCESS_LINK_TOKEN>`.
+- Publish one stable shared link in your X post: `https://creatoready.kelbrictech.workers.dev/x/<ACCESS_LINK_TOKEN>`.
 - A valid link sets the strictly necessary `__Host-creatoready_access` cookie, Secure/HttpOnly/SameSite=Lax/Path=/, Max-Age 86400 seconds (24 hours).
 - The Worker cryptographically signs a stateless session using a distinct secret (`SESSION_SIGNING_KEY`). It stores no visitor name, IP, email or analytics event.
 - Opening protected URLs without a valid cookie returns 401. Legal documents remain publicly readable. Session expiry is fixed: navigating or downloading during the window does not extend it.
@@ -140,7 +140,7 @@ Deployment uses `worker/access.mjs` and `wrangler.jsonc`, with `assets.run_worke
 
 1. In the existing `creatoready` Worker, configure production encrypted secrets `ACCESS_LINK_TOKEN` and `SESSION_SIGNING_KEY`. Generate each independently with at least 32 cryptographically random bytes encoded as base64url using Node: `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"`. Store the outputs securely; **do not commit them**.
 2. Deploy the repository with `npx wrangler deploy` from an authorized machine, or connect its main branch in Cloudflare Workers → Settings → Builds, ensuring the Worker name matches `creatoready`. The Worker must run before assets for the gate to work.
-3. Publish `https://creatoready.arjayb-fb.workers.dev/x/<ACCESS_LINK_TOKEN>` in the X post. Replace the bracketed placeholder with the first secret.
+3. Publish `https://creatoready.kelbrictech.workers.dev/x/<ACCESS_LINK_TOKEN>` in the X post. Replace the bracketed placeholder with the first secret.
 4. **Disable GitHub Pages** for `kelbrictech/CREATOREADY` in GitHub Settings → Pages. GitHub Pages cannot enforce server-side cookies. A convenience redirect on its index is not a security control. Do not advertise exclusive access until the Pages origin is disabled.
 5. Verify Cloudflare HTTP responses: public legal pages, 401 without a cookie, 303 + session cookie from the X link, authorized editor assets, fixed 24-hour expiry, production CSP, and real video export.
 6. Change `ACCESS_LINK_TOKEN` to revoke the public entry link; rotate `SESSION_SIGNING_KEY` to invalidate already issued sessions. Updating the token requires updating the X post/link.
