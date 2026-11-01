@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'creatoready-v4';
+const CACHE_VERSION = 'creatoready-v5';
 const base = new URL('./', self.registration.scope);
 const appURL = path => new URL(path,base).href;
 const SHELL = [

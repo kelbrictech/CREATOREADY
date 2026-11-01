@@ -76,3 +76,24 @@ This reduces inherited identifying tags; it **does not guarantee anonymous outpu
 - Example audit command: `ffprobe -v error -show_entries format=duration:format_tags -show_entries stream=index,codec_name,codec_type:stream_tags -of json exported.mp4`
 - Regression acceptance: valid MP4 playback, expected trim duration and crop dimensions, audio if originally present, no inherited title/creation-time metadata, and sensible download filename.
 - The FFmpeg GPL corresponding-source and license-compliance review remains open and separate from output-metadata cleanup.
+
+## Cloudflare Workers / Pages — FFmpeg initialization CSP fix
+
+CREATO’READY loads `@ffmpeg/core@0.12.10` into memory as blob object URLs. Its locally hosted FFmpeg worker executes `importScripts(coreURL)`. Cloudflare's `_headers` must allow both:
+
+- `blob:` in `script-src` for FFmpeg's generated core JavaScript.
+- `'wasm-unsafe-eval'` in `script-src` for WebAssembly compilation.
+
+This does **not** require the broader `'unsafe-eval'` permission. `worker-src 'self' blob:` and the existing restrictive directives remain in effect.
+
+**Cloudflare Workers Static Assets** and **Cloudflare Pages** honor `_headers` for assets served directly by their static asset handlers. If a Worker script generates the response (or handles all asset requests first), the Worker script must attach equivalent response headers itself; the repository's `_headers` file is not automatically applied to Worker-generated responses. GitHub Pages ignores `_headers`.
+
+Run the static regression suite with:
+
+```sh
+node --test tests/ffmpeg-security.test.mjs
+```
+
+**Browser reproduction (Chromium):** under the old CSP, importing a `blob:` core script via `importScripts` failed and `WebAssembly.Module` was blocked. With `blob:` and `'wasm-unsafe-eval'`, both operations passed. This isolates the relevant security-policy restrictions but is not an end-to-end run of the full ~32 MB FFmpeg.wasm core.
+
+**After Cloudflare deployment:** hard-refresh the site, check response headers (especially CSP), and export a short video. Confirm the video engine loads, then inspect duration, cropping, AAC sound when available, and output metadata. GitHub Pages build success does not prove a separate Cloudflare Workers deployment or that Cloudflare's currently active response headers were updated.
