@@ -12,18 +12,18 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icons/icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
-<link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap">
+<!-- No remote fonts, analytics, ads, or tracking scripts. -->
 <style>
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0;
     background: #05050a;
-    font-family: 'Sora', system-ui, sans-serif;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
     display: flex; align-items: center; justify-content: center;
     min-height: 100vh;
   }
   a { color: #ffb98a; text-decoration: none; }
-  .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+  .mono { font-family: ui-monospace, 'Consolas', monospace; }
 
   .phone {
     width: 390px; height: 844px;
@@ -200,7 +200,7 @@
   .stage { height: 704px; }
   .destination-list { display:grid; gap:10px; }
   .destination { width:100%; min-height:72px; padding:13px 15px; display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:12px; text-align:left; color:#d6d2df; background:rgba(255,255,255,.055); border:1px solid rgba(255,255,255,.1); border-radius:17px; cursor:pointer; }
-  .destination .ratio-icon { width:36px; height:46px; display:grid; place-items:center; border:1.5px solid #827a98; border-radius:7px; color:#a7a1b5; font:600 10px 'IBM Plex Mono',monospace; }
+  .destination .ratio-icon { width:36px; height:46px; display:grid; place-items:center; border:1.5px solid #827a98; border-radius:7px; color:#a7a1b5; font:600 10px 'Consolas',ui-monospace,monospace; }
   .destination strong { display:block; color:#f7f4ff; font-size:15px; }
   .destination small { display:block; margin-top:4px; color:#9e98ad; font-size:12px; }
   .destination .radio { width:18px; height:18px; border:1px solid #79728c; border-radius:50%; }
@@ -248,14 +248,24 @@
   .trim-panel.show { display:block; }
   .trim-head { display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:10px; font-size:13px; }
   .trim-head strong { color:#f7f4ff; }
-  .trim-head span { color:#b7b0cb; font:11px 'IBM Plex Mono',monospace; }
+  .trim-head span { color:#b7b0cb; font:11px 'Consolas',ui-monospace,monospace; }
   .trim-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .trim-fields label { min-width:0; display:block; color:#c8c2d8; font-size:11px; }
-  .trim-fields input { display:block; margin-top:6px; width:100%; border:1px solid rgba(120,203,255,.42); border-radius:10px; padding:10px 12px; color:#fff; background:rgba(5,9,26,.72); font:600 15px 'IBM Plex Mono',monospace; }
+  .trim-fields input { display:block; margin-top:6px; width:100%; border:1px solid rgba(120,203,255,.42); border-radius:10px; padding:10px 12px; color:#fff; background:rgba(5,9,26,.72); font:600 15px 'Consolas',ui-monospace,monospace; }
   .trim-fields input:focus-visible { outline:2px solid #7be9ff; outline-offset:2px; }
   .trim-help { margin:9px 0 0; color:#a9a2bd; font-size:11px; line-height:1.45; }
   .trim-error { margin:9px 0 0; color:#ffbdb6; font-size:12px; }
   .trim-error[hidden] { display:none; }
+  .privacy-link { text-decoration:none; }
+  .privacy-link:hover, .legal-nav a:hover { color:#b7f6ff; text-decoration:underline; }
+  .privacy-link:focus-visible, .legal-nav a:focus-visible { outline:2px solid #6deaff; outline-offset:3px; }
+  .legal-nav { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:9px; font-size:10px; }
+  .legal-nav a { color:#aaa4ba; }
+  @media (max-width:430px) {
+    .credit.legal-nav { display:flex; position:fixed; z-index:12; bottom:0; left:0; width:100%; min-height:34px; margin:0; padding:5px 8px max(5px,env(safe-area-inset-bottom)); background:rgba(6,7,19,.97); border-top:1px solid rgba(131,122,169,.27); }
+    .stage { height:calc(100dvh - 165px); }
+    .stage[data-stage="3"] { padding-bottom:14px; }
+  }
 </style>
 </head>
 <body>
@@ -268,9 +278,9 @@
           <img class="brand-icon" src="assets/embedded-2.webp" alt="">
           <img class="brand-wordmark" src="assets/embedded-3.png" alt="CREATO’READY">
         </div>
-        <div class="private mono" title="Files remain on this device">
+        <a class="private mono privacy-link" href="./privacy.html" title="Read our privacy notice">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> PRIVATE
-        </div>
+        </a>
       </header>
 
       <nav class="progress" aria-label="Progress"><i class="active"></i><i></i><i></i><i></i></nav>
@@ -351,7 +361,12 @@
       </section>
     </div>
   </main>
-  <div class="credit mono">CREATO’READY · ALL RIGHTS RESERVED</div>
+  <nav class="credit mono legal-nav" aria-label="Legal and information">
+    <span>FREE · NO ADS</span>
+    <a href="./privacy.html">Privacy</a>
+    <a href="./terms.html">Terms</a>
+    <a href="./legal.html">Legal &amp; contact</a>
+  </nav>
 </div>
 
 <script src="./vendor/ffmpeg/ffmpeg.js"></script>

@@ -24,3 +24,11 @@ Video encoding is computationally intensive and loads the entire input into brow
 ## Third-party license
 
 The vendored FFmpeg wrapper and worker are distributed under MIT; see `vendor/ffmpeg/LICENSE`. FFmpeg core has its own package licenses.
+
+## Legal disclosures and privacy
+
+The public site includes `legal.html`, `terms.html`, `privacy.html`, `cookies.html`, `copyright.html`, `accessibility.html`, and `licenses.html`. The footer links to the legal hub and principal notices. No ad or analytics scripts are included, and remote Google Fonts were removed to reduce third-party network requests.
+
+**Operator acceptance before promotion:** Confirm `kelbrictech@gmail.com` as the monitored contact address, and verify the responsible legal identity. Keep Cloudflare Web Analytics disabled if the no-analytics/no-intentional-data-collection promise will be used. Review relevant platform, hosting and software license obligations, particularly GPL-covered FFmpeg core and complete corresponding source availability. These documents are initial policy drafts, not a substitute for qualified legal review.
+
+Provider-level request and security logs may still exist. Do not publicly promise that no IP addresses or network metadata are ever processed.
