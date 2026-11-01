@@ -363,7 +363,7 @@
   const cropWindow=document.getElementById('cropWindow');
 let file,url,mediaType='image',ratio='9/16',format='9:16',destination='Reels, TikTok or Shorts',zoom=1,x=0,y=0,startX=0,startY=0,baseX=0,baseY=0,dragging=false,duration=0,sourceWidth=0,sourceHeight=0,probeReady=false;
   let coreUrls=[],ffmpegLog='';
-  let feedbackTimer,ffmpeg=null,ffmpegLoaded=false,processing=false,cancelRequested=false,resultUrl='',resultBlob=null,resultName='';
+  let feedbackTimer,ffmpeg=null,ffmpegLoaded=false,processing=false,cancelRequested=false,resultUrl='',resultBlob=null,resultName='',savedCrop=null;
   const outputSizes={'9/16':[720,1280],'4/5':[1080,1350],'1/1':[1080,1080]};
 
   function goTo(n){ stages.forEach((s,i)=>s.classList.toggle('active',i===n-1)); bars.forEach((b,i)=>b.className=i<n-1?'done':i===n-1?'active':''); }
@@ -446,7 +446,7 @@ document.getElementById('previewBtn').addEventListener('click',()=>{
     if(!probeReady)return;
     cropWindow.querySelectorAll('img,video').forEach(e=>e.remove());
     const el=makeMedia();cropWindow.prepend(el);
-    zoom=1;x=0;y=0;
+    zoom=1;x=0;y=0;savedCrop=null;
     document.getElementById('trimPanel').classList.toggle('show',mediaType==='video');
     document.getElementById('trimError').hidden=true;
     goTo(3);sizeCropWindow();acknowledge('Destination format applied');
@@ -463,6 +463,7 @@ document.getElementById('useFrameBtn').addEventListener('click',()=>{
     document.getElementById('finalName').textContent=file.name;
     document.getElementById('finalMeta').textContent=format+' · '+destination+(mediaType==='video'?' · '+formatTime(trim.end-trim.start):'');
     document.getElementById('finalRatio').textContent=format;
+    savedCrop=cropGeometry();
     goTo(4);acknowledge('Framing accepted');
   });
   function clearResult(){if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl='';resultBlob=null;resultName='';document.getElementById('resultPreview').replaceChildren();document.getElementById('resultPreview').style.display='none';}
@@ -472,7 +473,7 @@ function cropGeometry(){
     constrainFrame();
     const [outW,outH]=outputSizes[ratio];
     const cw=cropWindow.clientWidth,ch=cropWindow.clientHeight;
-    if(!cw||!ch)throw new Error('The crop preview is not ready.');
+    if(!cw||!ch){if(savedCrop)return savedCrop;throw new Error('The crop preview is not ready.');}
     const scale=Math.max(cw/sourceWidth,ch/sourceHeight)*zoom;
     const sw=Math.min(sourceWidth,cw/scale),sh=Math.min(sourceHeight,ch/scale);
     const sx=Math.max(0,Math.min(sourceWidth-sw,(sourceWidth-sw)/2-x/scale));
