@@ -1,24 +1,26 @@
-# Creato’Ready — Cloudflare Pages package
+# Creato’Ready — GitHub Pages + static hosting
 
-This directory is ready to publish as a static Cloudflare Pages site.
+A browser-based image and video editor for cropping, resizing and trimming. It runs client-side; media is not uploaded to a server.
 
-## Cloudflare Pages settings
+## Hosting
 
-- Framework preset: None
-- Build command: leave empty
-- Build output directory: `.`
-- Functions: none
-- Compatibility flags: none
+- Publish the repository root on the `main` branch with GitHub Pages, or deploy to Cloudflare Pages as a static folder.
+- All local paths (including the manifest and service worker) are relative, so a GitHub Pages project URL such as `/CREATOREADY/` works.
+- The bundled `vendor/ffmpeg/ffmpeg.js` and `814.ffmpeg.js` are the MIT-licensed FFmpeg.wasm UMD browser wrapper v0.12.15; these are hosted alongside the page because Web Workers must be same-origin.
+- The single-thread FFmpeg core JS and ~32 MB WASM are downloaded on first video export from pinned jsDelivr package `@ffmpeg/core@0.12.10`. The browser caches responses when storage permits.
+- `_headers` is honored by Cloudflare Pages, but ignored by GitHub Pages. The single-thread FFmpeg engine does not require cross-origin isolation.
 
-The `_headers` file enables cross-origin isolation and security headers. The service worker caches the app shell and pinned FFmpeg.wasm files after their first successful request. User-selected and generated media are not cached or uploaded.
+## Usage and acceptance checks
 
-## Acceptance checks after deployment
+1. Choose JPG/PNG or a browser-supported video (e.g. MP4).
+2. Select 9:16, 4:5, or 1:1, drag the crop preview and zoom.
+3. For video, enter start and end timestamps (e.g. 00:40 to 01:05).
+4. Export and check downloaded output for dimensions, framing, trimmed duration, audio, and playability.
+5. Check browser console for any network error while loading the wasm core.
+6. Test on the actual GitHub Pages URL with a short clip before relying on longer files.
 
-1. Open the deployed site in a private browser window.
-2. Confirm `window.crossOriginIsolated === true` in Developer Tools.
-3. Export one image and verify the downloaded dimensions.
-4. Export one short video and verify picture, audio, duration, crop, and download.
-5. Reload once, disconnect the network, and confirm the app shell opens. Video export works offline only after all FFmpeg resources have been cached by a previous successful video export.
-6. Confirm the Network panel contains no request carrying the selected media file.
+Video encoding is computationally intensive and loads the entire input into browser memory. Use short, reasonably sized clips; large files may exceed browser memory. Browsers must be able to decode the input's metadata. The source is never modified.
 
-No Cloudflare Functions, Workers, R2, KV, D1, Stream, Images, or server-side encoding are used.
+## Third-party license
+
+The vendored FFmpeg wrapper and worker are distributed under MIT; see `vendor/ffmpeg/LICENSE`. FFmpeg core has its own package licenses.

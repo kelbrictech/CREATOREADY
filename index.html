@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Creato’Ready — Private media resizing</title>
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/icons/icon-192.png" sizes="192x192">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap">
 <style>
   * { box-sizing: border-box; }
@@ -241,6 +241,21 @@
   .processing-error { display:none; margin-top:18px; padding:14px; border-radius:14px; color:#ffd5cc; background:rgba(128,36,45,.28); border:1px solid rgba(255,132,112,.32); font-size:12px; line-height:1.45; }
   .processing-error.show { display:block; }
   @media (max-width:430px) { .stage{height:calc(100dvh - 126px);} .crop-window{height:min(358px,43vh);} }
+  .stage[data-stage="3"] { overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; padding-bottom:10px; }
+  .stage[data-stage="3"] .frame-stage { flex-shrink:0; min-height:0; }
+  .stage[data-stage="3"] .primary { margin-top:18px; flex-shrink:0; }
+  .trim-panel { display:none; flex-shrink:0; margin-top:14px; padding:13px 14px; }
+  .trim-panel.show { display:block; }
+  .trim-head { display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:10px; font-size:13px; }
+  .trim-head strong { color:#f7f4ff; }
+  .trim-head span { color:#b7b0cb; font:11px 'IBM Plex Mono',monospace; }
+  .trim-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .trim-fields label { min-width:0; display:block; color:#c8c2d8; font-size:11px; }
+  .trim-fields input { display:block; margin-top:6px; width:100%; border:1px solid rgba(120,203,255,.42); border-radius:10px; padding:10px 12px; color:#fff; background:rgba(5,9,26,.72); font:600 15px 'IBM Plex Mono',monospace; }
+  .trim-fields input:focus-visible { outline:2px solid #7be9ff; outline-offset:2px; }
+  .trim-help { margin:9px 0 0; color:#a9a2bd; font-size:11px; line-height:1.45; }
+  .trim-error { margin:9px 0 0; color:#ffbdb6; font-size:12px; }
+  .trim-error[hidden] { display:none; }
 </style>
 </head>
 <body>
@@ -294,7 +309,15 @@
           <div class="crop-window" id="cropWindow"><div class="drag-hint">Drag to reposition</div></div>
         </div>
         <div class="zoom-row"><button class="zoom-button" id="zoomOut" aria-label="Zoom out">−</button><span id="zoomLabel">100% zoom</span><button class="zoom-button" id="zoomIn" aria-label="Zoom in">+</button></div>
-        <div class="glass-dim conditional" id="trimNotice"><span><strong>Video is longer than 60 seconds</strong>This version exports the first 60 seconds.</span><span>›</span></div>
+        <div class="glass-dim trim-panel" id="trimPanel">
+          <div class="trim-head"><strong>Trim video</strong><span id="videoDuration"></span></div>
+          <div class="trim-fields">
+            <label for="trimStart">Start time<input id="trimStart" type="text" inputmode="decimal" autocomplete="off" value="00:00" placeholder="00:40"></label>
+            <label for="trimEnd">End time<input id="trimEnd" type="text" inputmode="decimal" autocomplete="off" value="00:00" placeholder="01:05"></label>
+          </div>
+          <p class="trim-help">Use MM:SS or HH:MM:SS. Export includes only this segment.</p>
+          <p class="trim-error" id="trimError" role="alert" hidden></p>
+        </div>
         <button class="primary" id="useFrameBtn">Use this framing</button>
       </section>
 
@@ -309,7 +332,7 @@
           <p>No watermark. No account. Your file stays on this device.</p>
         </div>
         <div class="specs"><div class="glass-dim spec"><strong id="finalRatio">9:16</strong><span>FORMAT</span></div><div class="glass-dim spec"><strong>Auto</strong><span>QUALITY</span></div><div class="glass-dim spec"><strong>No</strong><span>WATERMARK</span></div></div>
-        <details><summary>Export settings</summary><div class="glass-dim settings-panel">Quality: automatic<br>Format: match source<br>Audio: preserve when supported</div></details>
+        <details><summary>Export settings</summary><div class="glass-dim settings-panel">Video: MP4 (H.264) · Image: PNG/JPG<br>Quality: automatic<br>Audio: AAC when present</div></details>
         <div class="prototype-note" id="privacyNote">Processing happens in this browser. Video export loads the processing engine on first use.</div>
         <button class="primary" id="confirmBtn">Create resized media</button>
         <div id="processingPanel" aria-live="polite">
@@ -322,7 +345,7 @@
           <div class="result-preview" id="resultPreview"></div>
           <div class="processing-error" id="processingError"></div>
           <button class="text-action" id="cancelProcessing">Cancel and return</button>
-          <button class="primary complete-action" id="processingDone">Download resized media</button>
+          <button class="primary complete-action" id="processingDone">Download edited media</button>
           <button class="text-action complete-action" id="changeAfterProcessing">Change settings</button>
         </div>
       </section>
@@ -331,15 +354,15 @@
   <div class="credit mono">CREATO’READY · ALL RIGHTS RESERVED</div>
 </div>
 
-<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js"></script>
-<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/umd/index.js"></script>
+<script src="./vendor/ffmpeg/ffmpeg.js"></script>
 <script>
   const input=document.getElementById('mediaInput');
   const stages=[...document.querySelectorAll('.stage')];
   const bars=[...document.querySelectorAll('.progress i')];
   const destinations=[...document.querySelectorAll('.destination')];
   const cropWindow=document.getElementById('cropWindow');
-  let file,url,mediaType='image',ratio='9/16',format='9:16',destination='Reels, TikTok or Shorts',zoom=1,x=0,y=0,startX=0,startY=0,baseX=0,baseY=0,dragging=false,duration=0,sourceWidth=0,sourceHeight=0;
+let file,url,mediaType='image',ratio='9/16',format='9:16',destination='Reels, TikTok or Shorts',zoom=1,x=0,y=0,startX=0,startY=0,baseX=0,baseY=0,dragging=false,duration=0,sourceWidth=0,sourceHeight=0,probeReady=false;
+  let coreUrls=[],ffmpegLog='';
   let feedbackTimer,ffmpeg=null,ffmpegLoaded=false,processing=false,cancelRequested=false,resultUrl='',resultBlob=null,resultName='';
   const outputSizes={'9/16':[720,1280],'4/5':[1080,1350],'1/1':[1080,1080]};
 
@@ -347,35 +370,207 @@
   function acknowledge(message){const box=document.getElementById('feedback');box.textContent='✓ '+message;box.classList.add('show');clearTimeout(feedbackTimer);feedbackTimer=setTimeout(()=>box.classList.remove('show'),1500);}
   function makeMedia(controls=false){ const el=document.createElement(mediaType==='video'?'video':'img'); el.src=url; el.alt=file?.name||'Selected media'; if(el.tagName==='VIDEO'){el.muted=true;el.playsInline=true;el.loop=true;el.autoplay=true;el.controls=controls;} return el; }
   function populate(container,controls=false){ container.replaceChildren(makeMedia(controls)); }
-  function updateTransform(){ const el=cropWindow.querySelector('img,video'); if(el){el.style.setProperty('--x',x+'px');el.style.setProperty('--y',y+'px');el.style.setProperty('--zoom',zoom);} document.getElementById('zoomLabel').textContent=Math.round(zoom*100)+'% zoom'; }
+function constrainFrame(){
+    if(!sourceWidth||!sourceHeight)return;
+    const cw=cropWindow.clientWidth,ch=cropWindow.clientHeight;
+    if(!cw||!ch)return;
+    const scale=Math.max(cw/sourceWidth,ch/sourceHeight)*zoom;
+    const maxX=Math.max(0,(sourceWidth*scale-cw)/2),maxY=Math.max(0,(sourceHeight*scale-ch)/2);
+    x=Math.max(-maxX,Math.min(maxX,x));y=Math.max(-maxY,Math.min(maxY,y));
+  }
+  function updateTransform(){constrainFrame();const el=cropWindow.querySelector('img,video');if(el){el.style.setProperty('--x',x+'px');el.style.setProperty('--y',y+'px');el.style.setProperty('--zoom',zoom);}document.getElementById('zoomLabel').textContent=Math.round(zoom*100)+'% zoom';}
+  function sizeCropWindow(){
+    const [rw,rh]=ratio.split('/').map(Number);
+    const maxWidth=Math.max(160,document.getElementById('frameStage').clientWidth-32);
+    const maxHeight=Math.min(358,Math.max(220,window.innerHeight*.42));
+    const h=Math.min(maxHeight,maxWidth*rh/rw);
+    cropWindow.style.width=Math.floor(h*rw/rh)+'px';
+    cropWindow.style.height=Math.floor(h)+'px';
+    cropWindow.style.aspectRatio=ratio;
+    updateTransform();
+  }
+  window.addEventListener('resize',()=>{if(stages[2].classList.contains('active'))sizeCropWindow();});
+  function formatTime(seconds){const n=Math.max(0,Math.floor(seconds*10)/10),m=Math.floor(n/60),s=(n-m*60).toFixed(1);const hh=Math.floor(m/60),mm=m%60;return (hh?String(hh).padStart(2,'0')+':':'')+String(mm).padStart(2,'0')+':'+s.padStart(4,'0');}
+  function parseTime(value){
+    const parts=value.trim().split(':');
+    if(parts.length>3||parts.length<1||parts.some(p=>!/^\d+(?:\.\d+)?$/.test(p)))return NaN;
+    if(parts.length>1&&parts.slice(1).some(p=>Number(p)>=60))return NaN;
+    if(parts.length>2&&parts.slice(0,-1).some(p=>!/^\d+$/.test(p)))return NaN;
+    return parts.reduce((sum,p)=>sum*60+Number(p),0);
+  }
+  function selectedTrim(){
+    if(mediaType!=='video')return {start:0,end:0};
+    const start=parseTime(document.getElementById('trimStart').value),end=parseTime(document.getElementById('trimEnd').value);
+    const error=document.getElementById('trimError');
+    let message='';
+    if(!Number.isFinite(duration)||duration<=0)message='The video duration could not be read. Try an MP4 or MOV file supported by this browser.';
+    else if(!Number.isFinite(start)||!Number.isFinite(end))message='Enter valid timestamps, such as 00:40 and 01:05.';
+    else if(start<0||start>=end)message='End time must be later than start time.';
+    else if(end>duration+.05)message='End time cannot exceed '+formatTime(duration)+'.';
+    error.hidden=!message;error.textContent=message;
+    return message?null:{start,end:Math.min(end,duration)};
+  }
 
-  input.addEventListener('change',()=>{ file=input.files[0]; if(!file)return; clearResult(); if(url)URL.revokeObjectURL(url); url=URL.createObjectURL(file); mediaType=file.type.startsWith('video/')?'video':'image'; const thumb=document.getElementById('sourceThumb'); populate(thumb); document.getElementById('sourceName').textContent=file.name; document.getElementById('sourceMeta').textContent=mediaType==='video'?'Video ready for framing':'Image ready for framing'; const probe=makeMedia(); const readyEvent=mediaType==='video'?'loadedmetadata':'load'; probe.addEventListener(readyEvent,()=>{sourceWidth=mediaType==='video'?probe.videoWidth:probe.naturalWidth;sourceHeight=mediaType==='video'?probe.videoHeight:probe.naturalHeight;if(mediaType==='video'){duration=probe.duration;document.getElementById('sourceMeta').textContent=Math.round(duration)+' sec video';}else{document.getElementById('sourceMeta').textContent=sourceWidth+' × '+sourceHeight+' image';}}); goTo(2); acknowledge('Media accepted'); });
+input.addEventListener('change',()=>{
+    file=input.files?.[0];if(!file)return;
+    if(!file.type.startsWith('video/')&&!file.type.startsWith('image/')){alert('Choose an image or video file.');input.value='';return;}
+    clearResult();if(url)URL.revokeObjectURL(url);
+    url=URL.createObjectURL(file);mediaType=file.type.startsWith('video/')?'video':'image';
+    sourceWidth=sourceHeight=duration=0;probeReady=false;document.getElementById('previewBtn').disabled=true;
+    const thumb=document.getElementById('sourceThumb');populate(thumb);
+    document.getElementById('sourceName').textContent=file.name;
+    document.getElementById('sourceMeta').textContent='Reading '+mediaType+' details…';
+    const probe=makeMedia();const readyEvent=mediaType==='video'?'loadedmetadata':'load';
+    probe.addEventListener(readyEvent,()=>{
+      if(probe.src!==url)return;
+      sourceWidth=mediaType==='video'?probe.videoWidth:probe.naturalWidth;
+      sourceHeight=mediaType==='video'?probe.videoHeight:probe.naturalHeight;
+      if(!sourceWidth||!sourceHeight){document.getElementById('sourceMeta').textContent='Could not read media dimensions';return;}
+      if(mediaType==='video'){
+        duration=probe.duration;
+        if(!Number.isFinite(duration)||duration<=0){document.getElementById('sourceMeta').textContent='Could not read video duration';return;}
+        document.getElementById('sourceMeta').textContent=formatTime(duration)+' video';
+        document.getElementById('videoDuration').textContent='Total '+formatTime(duration);
+        document.getElementById('trimStart').value='00:00';
+        document.getElementById('trimEnd').value=formatTime(duration);
+      }else{document.getElementById('sourceMeta').textContent=sourceWidth+' × '+sourceHeight+' image';}
+      probeReady=true;document.getElementById('previewBtn').disabled=false;
+    },{once:true});
+    probe.addEventListener('error',()=>{document.getElementById('sourceMeta').textContent='Unsupported or damaged file';},{once:true});
+    goTo(2);acknowledge('Media selected');
+  });
 
   destinations.forEach(item=>item.addEventListener('click',()=>{destinations.forEach(d=>{d.classList.remove('selected');d.setAttribute('aria-checked','false')});item.classList.add('selected');item.setAttribute('aria-checked','true');ratio=item.dataset.ratio;format=item.dataset.format;destination=item.dataset.label;document.getElementById('previewBtn').textContent='Preview for '+destination.replace('Reels, TikTok or Shorts','Reels');acknowledge(destination+' selected');}));
 
-  document.getElementById('previewBtn').addEventListener('click',()=>{cropWindow.style.aspectRatio=ratio;cropWindow.querySelectorAll('img,video').forEach(e=>e.remove());const el=makeMedia();cropWindow.prepend(el);zoom=1;x=0;y=0;updateTransform();document.getElementById('trimNotice').classList.toggle('show',mediaType==='video'&&duration>60);goTo(3);acknowledge('Destination format applied');});
+document.getElementById('previewBtn').addEventListener('click',()=>{
+    if(!probeReady)return;
+    cropWindow.querySelectorAll('img,video').forEach(e=>e.remove());
+    const el=makeMedia();cropWindow.prepend(el);
+    zoom=1;x=0;y=0;
+    document.getElementById('trimPanel').classList.toggle('show',mediaType==='video');
+    document.getElementById('trimError').hidden=true;
+    goTo(3);sizeCropWindow();acknowledge('Destination format applied');
+  });
   document.getElementById('zoomIn').addEventListener('click',()=>{zoom=Math.min(2,zoom+.1);updateTransform();acknowledge('Zoom updated')});
   document.getElementById('zoomOut').addEventListener('click',()=>{zoom=Math.max(1,zoom-.1);updateTransform();acknowledge('Zoom updated')});
   cropWindow.addEventListener('pointerdown',e=>{dragging=true;startX=e.clientX;startY=e.clientY;baseX=x;baseY=y;cropWindow.setPointerCapture(e.pointerId);document.getElementById('frameStage').classList.add('dragging')});
   cropWindow.addEventListener('pointermove',e=>{if(!dragging)return;x=baseX+e.clientX-startX;y=baseY+e.clientY-startY;updateTransform()});
   cropWindow.addEventListener('pointerup',()=>{dragging=false;document.getElementById('frameStage').classList.remove('dragging');acknowledge('Framing position updated')});
   document.querySelectorAll('[data-back]').forEach(button=>button.addEventListener('click',()=>{goTo(Number(button.dataset.back));acknowledge('Returned to previous step')}));
-  document.getElementById('useFrameBtn').addEventListener('click',()=>{populate(document.getElementById('finalThumb'));document.getElementById('finalName').textContent=file.name;document.getElementById('finalMeta').textContent=format+' · '+destination;document.getElementById('finalRatio').textContent=format;goTo(4);acknowledge('Framing accepted')});
+document.getElementById('useFrameBtn').addEventListener('click',()=>{
+    const trim=selectedTrim();if(!trim){document.getElementById('trimPanel').scrollIntoView({block:'nearest'});return;}
+    populate(document.getElementById('finalThumb'));
+    document.getElementById('finalName').textContent=file.name;
+    document.getElementById('finalMeta').textContent=format+' · '+destination+(mediaType==='video'?' · '+formatTime(trim.end-trim.start):'');
+    document.getElementById('finalRatio').textContent=format;
+    goTo(4);acknowledge('Framing accepted');
+  });
   function clearResult(){if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl='';resultBlob=null;resultName='';document.getElementById('resultPreview').replaceChildren();document.getElementById('resultPreview').style.display='none';}
   function setProgress(value,phase,message){const pct=Math.max(0,Math.min(100,Math.round(value)));document.getElementById('processingFill').style.width=pct+'%';document.getElementById('processingPercent').textContent=pct+'%';document.querySelector('.processing-track').setAttribute('aria-valuenow',String(pct));document.getElementById('processingStep').textContent=phase;document.getElementById('processingStatus').textContent=message;}
-  function cropGeometry(){const [outW,outH]=outputSizes[ratio];const cw=cropWindow.clientWidth||300,ch=cropWindow.clientHeight||358;const scale=Math.max(cw/sourceWidth,ch/sourceHeight)*zoom;const shownW=sourceWidth*scale,shownH=sourceHeight*scale;let sx=(-((cw-shownW)/2+x))/scale,sy=(-((ch-shownH)/2+y))/scale,sw=cw/scale,sh=ch/scale;sx=Math.max(0,Math.min(sourceWidth-sw,sx));sy=Math.max(0,Math.min(sourceHeight-sh,sy));return {sx,sy,sw,sh,outW,outH};}
+function cropGeometry(){
+    if(!sourceWidth||!sourceHeight)throw new Error('Media dimensions are unavailable.');
+    constrainFrame();
+    const [outW,outH]=outputSizes[ratio];
+    const cw=cropWindow.clientWidth,ch=cropWindow.clientHeight;
+    if(!cw||!ch)throw new Error('The crop preview is not ready.');
+    const scale=Math.max(cw/sourceWidth,ch/sourceHeight)*zoom;
+    const sw=Math.min(sourceWidth,cw/scale),sh=Math.min(sourceHeight,ch/scale);
+    const sx=Math.max(0,Math.min(sourceWidth-sw,(sourceWidth-sw)/2-x/scale));
+    const sy=Math.max(0,Math.min(sourceHeight-sh,(sourceHeight-sh)/2-y/scale));
+    return {sx,sy,sw,sh,outW,outH};
+  }
   function waitForMedia(el,event){return new Promise((resolve,reject)=>{if((event==='load'&&el.complete)||(event==='loadedmetadata'&&el.readyState>=1))return resolve();el.addEventListener(event,resolve,{once:true});el.addEventListener('error',()=>reject(new Error('The selected media could not be decoded by this browser.')),{once:true});});}
   async function processImage(){setProgress(12,'Reading image','Decoding the selected image');const img=new Image();img.src=url;await waitForMedia(img,'load');sourceWidth=img.naturalWidth;sourceHeight=img.naturalHeight;if(cancelRequested)throw new DOMException('Cancelled','AbortError');const g=cropGeometry();setProgress(48,'Applying frame','Cropping and resizing on this device');const canvas=document.createElement('canvas');canvas.width=g.outW;canvas.height=g.outH;const ctx=canvas.getContext('2d',{alpha:false});ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(img,g.sx,g.sy,g.sw,g.sh,0,0,g.outW,g.outH);setProgress(82,'Encoding image','Creating the downloadable file');const type=file.type==='image/png'?'image/png':'image/jpeg';const quality=type==='image/jpeg'?.9:undefined;const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('This browser could not create the image.')),type,quality));return {blob,extension:type==='image/png'?'png':'jpg'};}
-  async function loadFFmpeg(){if(ffmpegLoaded)return;setProgress(8,'Loading engine','First video export downloads the local processing engine');if(!window.FFmpegWASM||!window.FFmpegUtil)throw new Error('The video engine could not load. Check your connection and try again.');ffmpeg=new FFmpegWASM.FFmpeg();ffmpeg.on('progress',({progress})=>{if(Number.isFinite(progress))setProgress(25+Math.max(0,Math.min(.68,progress*.68))*100,'Processing video','Encoding locally — keep this page open');});const base='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';await ffmpeg.load({coreURL:await FFmpegUtil.toBlobURL(base+'/ffmpeg-core.js','text/javascript'),wasmURL:await FFmpegUtil.toBlobURL(base+'/ffmpeg-core.wasm','application/wasm')});ffmpegLoaded=true;}
-  async function processVideo(){await loadFFmpeg();if(cancelRequested)throw new DOMException('Cancelled','AbortError');setProgress(18,'Reading video','Copying the selected file into browser memory');const ext=(file.name.split('.').pop()||'mp4').replace(/[^a-z0-9]/gi,'').toLowerCase()||'mp4';const inputName='input.'+ext,outputName='creatoready-output.mp4';await ffmpeg.writeFile(inputName,await FFmpegUtil.fetchFile(file));const probe=makeMedia();await waitForMedia(probe,'loadedmetadata');sourceWidth=probe.videoWidth;sourceHeight=probe.videoHeight;const g=cropGeometry();const crop=[Math.max(2,Math.floor(g.sw/2)*2),Math.max(2,Math.floor(g.sh/2)*2),Math.max(0,Math.floor(g.sx/2)*2),Math.max(0,Math.floor(g.sy/2)*2)];const args=['-i',inputName];if(duration>60)args.push('-t','60');args.push('-map','0:v:0','-map','0:a?','-vf',`crop=${crop[0]}:${crop[1]}:${crop[2]}:${crop[3]},scale=${g.outW}:${g.outH}:flags=lanczos,setsar=1`,'-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-c:a','aac','-b:a','128k','-movflags','+faststart',outputName);setProgress(25,'Processing video','Encoding locally — keep this page open');const code=await ffmpeg.exec(args);if(cancelRequested)throw new DOMException('Cancelled','AbortError');if(code!==0)throw new Error('The video engine could not encode this file.');setProgress(94,'Finalizing','Preparing the output preview');const data=await ffmpeg.readFile(outputName);const blob=new Blob([data.buffer],{type:'video/mp4'});try{await ffmpeg.deleteFile(inputName);await ffmpeg.deleteFile(outputName);}catch{}return {blob,extension:'mp4'};}
+async function fetchAsBlobURL(url,mime){
+    const response=await fetch(url,{cache:'force-cache'});
+    if(!response.ok)throw new Error('Video engine download returned HTTP '+response.status+'.');
+    const bytes=await response.arrayBuffer();
+    const result=URL.createObjectURL(new Blob([bytes],{type:mime}));
+    coreUrls.push(result);return result;
+  }
+  function resetEngine(){
+    if(ffmpeg){ffmpeg.terminate();ffmpeg=null;}
+    ffmpegLoaded=false;
+    for(const u of coreUrls)URL.revokeObjectURL(u);
+    coreUrls=[];
+  }
+  async function loadFFmpeg(){
+    if(ffmpegLoaded)return;
+    setProgress(8,'Loading engine','Downloading FFmpeg processing components (about 32 MB on first use)');
+    if(!window.FFmpegWASM?.FFmpeg)throw new Error('The local video processor is missing. Refresh this page and try again.');
+    ffmpegLog='';
+    try{
+      ffmpeg=new FFmpegWASM.FFmpeg();
+      ffmpeg.on('log',({message})=>{ffmpegLog=(ffmpegLog+'\n'+message).slice(-1800);});
+      ffmpeg.on('progress',({progress})=>{if(Number.isFinite(progress))setProgress(25+Math.min(1,Math.max(0,progress))*65,'Processing video','Encoding locally — keep this page open');});
+      const base='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/';
+      const [coreURL,wasmURL]=await Promise.all([
+        fetchAsBlobURL(base+'ffmpeg-core.js','text/javascript'),
+        fetchAsBlobURL(base+'ffmpeg-core.wasm','application/wasm')
+      ]);
+      if(cancelRequested)throw new DOMException('Cancelled','AbortError');
+      await ffmpeg.load({coreURL,wasmURL});
+      if(cancelRequested)throw new DOMException('Cancelled','AbortError');
+      ffmpegLoaded=true;
+    }catch(error){
+      resetEngine();
+      if(cancelRequested||error?.name==='AbortError')throw new DOMException('Cancelled','AbortError');
+      throw new Error('FFmpeg engine failed to initialize: '+(error?.message||String(error)));
+    }
+  }
+async function processVideo(){
+    const trim=selectedTrim();if(!trim)throw new Error('Enter a valid video trim range.');
+    await loadFFmpeg();
+    if(cancelRequested)throw new DOMException('Cancelled','AbortError');
+    setProgress(18,'Reading video','Copying the original video into browser memory');
+    const ext=(file.name.split('.').pop()||'mp4').replace(/[^a-z0-9]/gi,'').toLowerCase()||'mp4';
+    const inputName='input.'+ext,outputName='creatoready-output.mp4';
+    try{
+      await ffmpeg.writeFile(inputName,new Uint8Array(await file.arrayBuffer()));
+      if(cancelRequested)throw new DOMException('Cancelled','AbortError');
+      const g=cropGeometry();
+      const cropW=Math.min(sourceWidth,Math.max(2,Math.floor(g.sw/2)*2));
+      const cropH=Math.min(sourceHeight,Math.max(2,Math.floor(g.sh/2)*2));
+      const cropX=Math.max(0,Math.min(sourceWidth-cropW,Math.floor(g.sx/2)*2));
+      const cropY=Math.max(0,Math.min(sourceHeight-cropH,Math.floor(g.sy/2)*2));
+      const args=['-ss',String(trim.start),'-i',inputName,'-t',String(trim.end-trim.start),
+        '-map','0:v:0','-map','0:a?','-vf',`crop=${cropW}:${cropH}:${cropX}:${cropY},scale=${g.outW}:${g.outH}:flags=lanczos,setsar=1`,
+        '-c:v','libx264','-preset','ultrafast','-crf','23','-pix_fmt','yuv420p',
+        '-c:a','aac','-b:a','128k','-movflags','+faststart',outputName];
+      setProgress(25,'Processing video','Trimming, cropping and resizing on this device');
+      const code=await ffmpeg.exec(args);
+      if(cancelRequested)throw new DOMException('Cancelled','AbortError');
+      if(code!==0)throw new Error('Video encoding failed. '+(ffmpegLog.slice(-350)||'Try an MP4/H.264 input.'));
+      setProgress(94,'Finalizing','Preparing the output preview');
+      const data=await ffmpeg.readFile(outputName);
+      return {blob:new Blob([data],{type:'video/mp4'}),extension:'mp4'};
+    }finally{
+      if(ffmpegLoaded){
+        try{await ffmpeg.deleteFile(inputName);}catch{}
+        try{await ffmpeg.deleteFile(outputName);}catch{}
+      }
+    }
+  }
   function showResult(result){resultBlob=result.blob;resultName=(file.name.replace(/\.[^.]+$/,'')||'creatoready')+'-'+format.replace(':','x')+'.'+result.extension;resultUrl=URL.createObjectURL(resultBlob);const preview=document.getElementById('resultPreview');const el=document.createElement(mediaType==='video'?'video':'img');el.src=resultUrl;if(el.tagName==='VIDEO'){el.controls=true;el.playsInline=true;}el.alt='Processed '+resultName;preview.replaceChildren(el);preview.style.display='block';setProgress(100,'Complete','Your resized media is ready to download');document.getElementById('processingTitle').textContent='Your media is ready.';document.querySelector('.processing-orb svg').style.animation='none';document.getElementById('cancelProcessing').style.display='none';document.getElementById('processingDone').style.display='block';document.getElementById('changeAfterProcessing').style.display='block';acknowledge('Resized media created');}
-  function showReview(message='Returned to export review'){cancelRequested=true;if(processing&&ffmpeg){ffmpeg.terminate();ffmpeg=null;ffmpegLoaded=false;}processing=false;const stage=stages[3];stage.classList.remove('processing');setProgress(0,'Preparing','Reading the selected format');document.getElementById('processingDone').style.display='none';document.getElementById('changeAfterProcessing').style.display='none';document.getElementById('cancelProcessing').style.display='inline-block';document.getElementById('processingTitle').textContent='Preparing your media…';document.getElementById('processingError').classList.remove('show');document.querySelector('.processing-orb svg').style.animation='';acknowledge(message);}
+function showReview(message='Returned to export review'){
+    cancelRequested=true;if(processing&&ffmpeg)resetEngine();processing=false;
+    const stage=stages[3];stage.classList.remove('processing');
+    setProgress(0,'Preparing','Reading the selected format');
+    document.getElementById('processingDone').style.display='none';
+    document.getElementById('changeAfterProcessing').style.display='none';
+    document.getElementById('cancelProcessing').style.display='inline-block';
+    document.getElementById('cancelProcessing').textContent='Cancel and return';
+    document.getElementById('processingTitle').textContent='Preparing your media…';
+    document.getElementById('processingError').classList.remove('show');
+    document.querySelector('.processing-orb svg').style.animation='';
+    acknowledge(message);
+  }
   async function startProcessing(){if(!file||processing)return;acknowledge('Export started');clearResult();cancelRequested=false;processing=true;const stage=stages[3];stage.classList.add('processing');document.getElementById('processingError').classList.remove('show');document.getElementById('processingDone').style.display='none';document.getElementById('changeAfterProcessing').style.display='none';document.getElementById('cancelProcessing').style.display='inline-block';document.querySelector('.processing-orb svg').style.animation='';try{const result=mediaType==='video'?await processVideo():await processImage();if(!cancelRequested)showResult(result);}catch(error){if(error?.name==='AbortError'||cancelRequested)return;processing=false;document.querySelector('.processing-orb svg').style.animation='none';document.getElementById('processingTitle').textContent='Export could not be completed';setProgress(0,'Needs attention','Your original file is unchanged');const box=document.getElementById('processingError');box.textContent=error?.message||'An unexpected processing error occurred.';box.classList.add('show');document.getElementById('cancelProcessing').textContent='Return and try again';}finally{if(!cancelRequested)processing=false;}}
   document.getElementById('confirmBtn').addEventListener('click',startProcessing);
   document.getElementById('cancelProcessing').addEventListener('click',()=>showReview(processing?'Processing cancelled':'Returned to export review'));
   document.getElementById('changeAfterProcessing').addEventListener('click',()=>showReview());
   document.getElementById('processingDone').addEventListener('click',()=>{if(!resultBlob)return;const a=document.createElement('a');a.href=resultUrl;a.download=resultName;document.body.appendChild(a);a.click();a.remove();acknowledge('Download started');});
-  if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(error=>console.warn('Offline support unavailable:',error)));}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(error=>console.warn('Offline support unavailable:',error)));}
 </script>
 </body>
 </html>
