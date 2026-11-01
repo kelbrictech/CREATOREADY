@@ -523,7 +523,7 @@ let file,url,mediaType='image',ratio='9/16',format='9:16',destination='',zoom=1,
     destinations.replaceChildren();
     document.getElementById('presetCount').textContent=shown.length+' templates · '+new Set(shown.map(p=>p.platform)).size+' platforms · '+mediaType;
     if(!shown.length){selectedPreset=null;document.getElementById('presetDetail').textContent='Try another platform or search.';document.getElementById('previewBtn').textContent='Choose a template';document.getElementById('previewBtn').disabled=true;const empty=document.createElement('p');empty.className='preset-empty';empty.textContent='No matching templates for this media type.';destinations.appendChild(empty);return;}
-    if(!shown.some(p=>selectedPreset?.id===p.id))selectedPreset=shown[0];
+    if(!shown.some(p=>selectedPreset?.id===p.id))selectedPreset=shown.find(p=>p.platform==='Instagram'&&p.name===(mediaType==='video'?'Reels':'Feed portrait'))||shown[0];
     for(const p of shown){
       const button=document.createElement('button');button.type='button';button.className='destination';button.dataset.presetId=p.id;button.setAttribute('role','radio');
       const icon=document.createElement('span');icon.className='ratio-icon';icon.textContent=aspectLabel(p.width,p.height);
