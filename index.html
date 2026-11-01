@@ -208,7 +208,19 @@
 <style>
   .progress { grid-template-columns: repeat(4,1fr); }
   .stage { height: 704px; }
-  .destination-list { display:grid; gap:10px; }
+  .destination-list { display:grid; gap:9px; max-height:310px; overflow-y:auto; padding-right:3px; scrollbar-width:thin; }
+  .preset-filters { display:grid; gap:7px; margin:7px 0 9px; }
+  .preset-filters label { color:#c3bdd4; font-size:11px; font-weight:700; }
+  .preset-filters select,.preset-filters input { width:100%; min-height:40px; padding:9px 11px; border-radius:12px; border:1px solid rgba(255,255,255,.2); background:#19172b; color:#f7f4ff; font:inherit; font-size:13px; }
+  .preset-filters :is(select,input):focus-visible,.destination:focus-visible { outline:2px solid #74e6ff; outline-offset:2px; }
+  .preset-count,.preset-detail { color:#c1b9d2; font-size:11px; line-height:1.45; margin:6px 2px; }
+  .preset-detail { color:#bdeefa; min-height:17px; }
+  .stage[data-stage="2"] { overflow-y:auto; overscroll-behavior:contain; padding-bottom:8px; scrollbar-width:thin; }
+  .stage[data-stage="2"] .lede { margin-bottom:7px; }
+  .stage[data-stage="2"] .review { padding:10px; margin-top:9px!important; flex-shrink:0; }
+  .stage[data-stage="2"] .review .thumb { height:60px; width:50px; }
+  .stage[data-stage="2"] #previewBtn { position:sticky; bottom:0; z-index:4; flex-shrink:0; margin-top:10px; }
+  .preset-empty { padding:18px 8px; text-align:center; color:#c1b9d2; font-size:12px; }
   .destination { width:100%; min-height:72px; padding:13px 15px; display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:12px; text-align:left; color:#d6d2df; background:rgba(255,255,255,.055); border:1px solid rgba(255,255,255,.1); border-radius:17px; cursor:pointer; }
   .destination .ratio-icon { width:36px; height:46px; display:grid; place-items:center; border:1.5px solid #827a98; border-radius:7px; color:#a7a1b5; font:600 10px 'Consolas',ui-monospace,monospace; }
   .destination strong { display:block; color:#f7f4ff; font-size:15px; }
@@ -376,13 +388,17 @@ body.agreement-required{overflow:hidden}
         <div class="eyebrow mono">STEP 2 OF 4</div>
         <div class="stage-heading"><button class="back-control" data-back="1" aria-label="Return to choose media">←</button><h1>Where will you post?</h1></div>
         <p class="lede">Choose the destination. We’ll handle the dimensions.</p>
-        <div class="destination-list" role="radiogroup" aria-label="Posting destination">
-          <button class="destination selected" data-ratio="9/16" data-format="9:16" data-label="Reels, TikTok or Shorts" role="radio" aria-checked="true"><span class="ratio-icon">9:16</span><span><strong>Reels · TikTok · Shorts</strong><small>Full-screen vertical video</small></span><span class="radio"></span></button>
-          <button class="destination" data-ratio="4/5" data-format="4:5" data-label="Instagram feed" role="radio" aria-checked="false"><span class="ratio-icon" style="height:42px">4:5</span><span><strong>Instagram feed</strong><small>Tall feed post</small></span><span class="radio"></span></button>
-          <button class="destination" data-ratio="1/1" data-format="1:1" data-label="Square post" role="radio" aria-checked="false"><span class="ratio-icon" style="height:36px">1:1</span><span><strong>Square post</strong><small>Balanced across feeds</small></span><span class="radio"></span></button>
+        <div class="preset-filters">
+          <label for="platformFilter">Platform</label>
+          <select id="platformFilter" aria-label="Filter templates by platform"><option value="all">All platforms</option></select>
+          <label for="presetSearch">Search templates</label>
+          <input id="presetSearch" type="search" autocomplete="off" placeholder="Reels, Shorts, Pin, banner…" aria-label="Search social templates">
         </div>
+        <p class="preset-count" id="presetCount" aria-live="polite"></p>
+        <div class="destination-list" id="destinationList" role="radiogroup" aria-label="Placement templates"></div>
+        <p class="preset-detail" id="presetDetail" aria-live="polite"></p>
         <div class="glass review" style="margin-top:14px"><div class="thumb" id="sourceThumb"></div><div class="review-copy"><div class="file-name" id="sourceName">Your media</div><div class="file-meta" id="sourceMeta">Ready for framing</div></div></div>
-        <button class="primary" id="previewBtn">Preview for Reels</button>
+        <button class="primary" id="previewBtn" disabled>Choose a template</button>
       </section>
 
       <section class="stage" data-stage="3">
@@ -415,7 +431,7 @@ body.agreement-required{overflow:hidden}
           <h2>Your framing is ready.</h2>
           <p>No watermark. No account. Your file stays on this device.</p>
         </div>
-        <div class="specs"><div class="glass-dim spec"><strong id="finalRatio">9:16</strong><span>FORMAT</span></div><div class="glass-dim spec"><strong>Auto</strong><span>QUALITY</span></div><div class="glass-dim spec"><strong>No</strong><span>WATERMARK</span></div></div>
+        <div class="specs"><div class="glass-dim spec"><strong id="finalRatio">9:16</strong><span>FORMAT</span></div><div class="glass-dim spec"><strong id="finalPixels">1080 × 1920</strong><span>PIXELS</span></div><div class="glass-dim spec"><strong>No</strong><span>WATERMARK</span></div></div>
         <details><summary>Export settings</summary><div class="glass-dim settings-panel">Video: MP4 (H.264) · Image: PNG/JPG<br>Quality: automatic<br>Audio: AAC when present</div></details>
         <div class="prototype-note" id="privacyNote">Processing happens in this browser. Video export loads the processing engine on first use.</div>
         <button class="primary" id="confirmBtn">Create resized media</button>
@@ -448,6 +464,9 @@ body.agreement-required{overflow:hidden}
   </nav>
 </div>
 
+<script type="application/json" id="socialPresetCatalog">
+[{"id":"p1","platform":"Instagram","name":"Reels","width":1080,"height":1920,"media":"video"},{"id":"p2","platform":"Instagram","name":"Stories","width":1080,"height":1920,"media":"both"},{"id":"p3","platform":"Instagram","name":"Feed portrait","width":1080,"height":1350,"media":"image"},{"id":"p4","platform":"Instagram","name":"Feed square","width":1080,"height":1080,"media":"image"},{"id":"p5","platform":"Instagram","name":"Feed landscape","width":1080,"height":566,"media":"image"},{"id":"p6","platform":"Instagram","name":"Carousel card","width":1080,"height":1350,"media":"image"},{"id":"p7","platform":"Facebook","name":"Reels","width":1080,"height":1920,"media":"video"},{"id":"p8","platform":"Facebook","name":"Stories","width":1080,"height":1920,"media":"both"},{"id":"p9","platform":"Facebook","name":"Feed portrait","width":1080,"height":1350,"media":"both"},{"id":"p10","platform":"Facebook","name":"Feed square","width":1080,"height":1080,"media":"both"},{"id":"p11","platform":"Facebook","name":"Feed landscape","width":1200,"height":630,"media":"both"},{"id":"p12","platform":"TikTok","name":"For You video","width":1080,"height":1920,"media":"video"},{"id":"p13","platform":"TikTok","name":"Photo carousel","width":1080,"height":1920,"media":"image"},{"id":"p14","platform":"TikTok","name":"Square image","width":1080,"height":1080,"media":"image"},{"id":"p15","platform":"YouTube","name":"Shorts","width":1080,"height":1920,"media":"video"},{"id":"p16","platform":"YouTube","name":"Standard video HD","width":1920,"height":1080,"media":"video"},{"id":"p17","platform":"YouTube","name":"Video thumbnail","width":1280,"height":720,"media":"image"},{"id":"p18","platform":"YouTube","name":"Community square","width":1080,"height":1080,"media":"image"},{"id":"p19","platform":"YouTube","name":"Channel banner","width":2560,"height":1440,"media":"image"},{"id":"p20","platform":"X","name":"Vertical post","width":1080,"height":1350,"media":"both"},{"id":"p21","platform":"X","name":"Square post","width":1200,"height":1200,"media":"both"},{"id":"p22","platform":"X","name":"Landscape post","width":1600,"height":900,"media":"both"},{"id":"p23","platform":"X","name":"Profile header","width":1500,"height":500,"media":"image"},{"id":"p24","platform":"Threads","name":"Feed portrait","width":1080,"height":1350,"media":"both"},{"id":"p25","platform":"Threads","name":"Feed square","width":1080,"height":1080,"media":"both"},{"id":"p26","platform":"Threads","name":"Vertical video","width":1080,"height":1920,"media":"video"},{"id":"p27","platform":"LinkedIn","name":"Feed square","width":1200,"height":1200,"media":"image"},{"id":"p28","platform":"LinkedIn","name":"Feed landscape","width":1200,"height":628,"media":"image"},{"id":"p29","platform":"LinkedIn","name":"Feed portrait","width":1080,"height":1350,"media":"image"},{"id":"p30","platform":"LinkedIn","name":"Vertical video","width":1080,"height":1920,"media":"video"},{"id":"p31","platform":"LinkedIn","name":"Profile banner","width":1584,"height":396,"media":"image"},{"id":"p32","platform":"Pinterest","name":"Standard Pin","width":1000,"height":1500,"media":"image"},{"id":"p33","platform":"Pinterest","name":"Square Pin","width":1000,"height":1000,"media":"image"},{"id":"p34","platform":"Pinterest","name":"Video Pin","width":1080,"height":1920,"media":"video"},{"id":"p35","platform":"Snapchat","name":"Story","width":1080,"height":1920,"media":"both"},{"id":"p36","platform":"Snapchat","name":"Spotlight","width":1080,"height":1920,"media":"video"},{"id":"p37","platform":"WhatsApp","name":"Status","width":1080,"height":1920,"media":"both"},{"id":"p38","platform":"WhatsApp","name":"Square share","width":1080,"height":1080,"media":"image"},{"id":"p39","platform":"Telegram","name":"Story","width":1080,"height":1920,"media":"both"},{"id":"p40","platform":"Telegram","name":"Channel square","width":1080,"height":1080,"media":"image"},{"id":"p41","platform":"Reddit","name":"Portrait post","width":1080,"height":1350,"media":"image"},{"id":"p42","platform":"Reddit","name":"Square post","width":1080,"height":1080,"media":"image"},{"id":"p43","platform":"Reddit","name":"Vertical video","width":1080,"height":1920,"media":"video"},{"id":"p44","platform":"Bluesky","name":"Feed portrait","width":1080,"height":1350,"media":"image"},{"id":"p45","platform":"Bluesky","name":"Landscape image","width":1200,"height":675,"media":"image"},{"id":"p46","platform":"Discord","name":"Server icon","width":512,"height":512,"media":"image"},{"id":"p47","platform":"Discord","name":"Server banner","width":960,"height":540,"media":"image"},{"id":"p48","platform":"Twitch","name":"Offline screen","width":1920,"height":1080,"media":"image"},{"id":"p49","platform":"Twitch","name":"Profile avatar","width":800,"height":800,"media":"image"},{"id":"p50","platform":"Tumblr","name":"Portrait image","width":1080,"height":1350,"media":"image"},{"id":"p51","platform":"Tumblr","name":"Square media","width":1080,"height":1080,"media":"both"},{"id":"p52","platform":"Lemon8","name":"Portrait post","width":1080,"height":1440,"media":"image"},{"id":"p53","platform":"Lemon8","name":"Cover vertical","width":1080,"height":1920,"media":"image"},{"id":"p54","platform":"Mastodon","name":"Square post","width":1080,"height":1080,"media":"both"},{"id":"p55","platform":"Mastodon","name":"Landscape post","width":1200,"height":675,"media":"both"},{"id":"p56","platform":"LINE","name":"VOOM vertical","width":1080,"height":1920,"media":"video"},{"id":"p57","platform":"LINE","name":"VOOM square","width":1080,"height":1080,"media":"image"},{"id":"p58","platform":"Kwai","name":"Short video","width":1080,"height":1920,"media":"video"},{"id":"p59","platform":"Vimeo","name":"Landscape video","width":1920,"height":1080,"media":"video"},{"id":"p60","platform":"Vimeo","name":"Square video","width":1080,"height":1080,"media":"video"},{"id":"p61","platform":"General","name":"Portrait 4:5","width":1080,"height":1350,"media":"both"},{"id":"p62","platform":"General","name":"Vertical 9:16","width":1080,"height":1920,"media":"both"},{"id":"p63","platform":"General","name":"Square 1:1","width":1080,"height":1080,"media":"both"},{"id":"p64","platform":"General","name":"Landscape 16:9","width":1920,"height":1080,"media":"both"},{"id":"p65","platform":"General","name":"Portrait 2:3","width":1000,"height":1500,"media":"both"}]
+</script>
 <script src="./vendor/ffmpeg/ffmpeg.js"></script>
 <script>
 
@@ -479,12 +498,47 @@ body.agreement-required{overflow:hidden}
   const input=document.getElementById('mediaInput');
   const stages=[...document.querySelectorAll('.stage')];
   const bars=[...document.querySelectorAll('.progress i')];
-  const destinations=[...document.querySelectorAll('.destination')];
+  const destinations=document.getElementById('destinationList');
+  const platformFilter=document.getElementById('platformFilter');
+  const presetSearch=document.getElementById('presetSearch');
+  const presets=JSON.parse(document.getElementById('socialPresetCatalog').textContent);
+  let selectedPreset=null;
   const cropWindow=document.getElementById('cropWindow');
-let file,url,mediaType='image',ratio='9/16',format='9:16',destination='Reels, TikTok or Shorts',zoom=1,x=0,y=0,startX=0,startY=0,baseX=0,baseY=0,dragging=false,duration=0,sourceWidth=0,sourceHeight=0,probeReady=false;
+let file,url,mediaType='image',ratio='9/16',format='9:16',destination='',zoom=1,x=0,y=0,startX=0,startY=0,baseX=0,baseY=0,dragging=false,duration=0,sourceWidth=0,sourceHeight=0,probeReady=false;
   let coreUrls=[],ffmpegLog='';
   let feedbackTimer,ffmpeg=null,ffmpegLoaded=false,processing=false,cancelRequested=false,resultUrl='',resultBlob=null,resultName='',savedCrop=null;
-  const outputSizes={'9/16':[720,1280],'4/5':[1080,1350],'1/1':[1080,1080]};
+  function gcd(a,b){while(b){const t=b;b=a%b;a=t;}return a;}
+  function aspectLabel(w,h){const d=gcd(w,h),a=w/d,b=h/d;return a<=20&&b<=20?a+':'+b:w>h?(w/h).toFixed(2)+':1':'1:'+(h/w).toFixed(2);}
+  function eligiblePresets(){return presets.filter(p=>p.media==='both'||p.media===mediaType);}
+  function choosePreset(p){
+    selectedPreset=p;ratio=p.width+'/'+p.height;format=aspectLabel(p.width,p.height);destination=p.platform+' · '+p.name;
+    destinations.querySelectorAll('.destination').forEach(button=>{const active=button.dataset.presetId===p.id;button.classList.toggle('selected',active);button.setAttribute('aria-checked',String(active));button.tabIndex=active?0:-1;});
+    document.getElementById('presetDetail').textContent=p.width+' × '+p.height+' px · '+format;
+    document.getElementById('previewBtn').textContent='Preview '+p.name;
+    document.getElementById('previewBtn').disabled=!probeReady;
+  }
+  function renderPresets(){
+    const platform=platformFilter.value,query=presetSearch.value.trim().toLowerCase();
+    const shown=eligiblePresets().filter(p=>(platform==='all'||p.platform===platform)&&(!query||(p.platform+' '+p.name).toLowerCase().includes(query)));
+    destinations.replaceChildren();
+    document.getElementById('presetCount').textContent=shown.length+' templates · '+new Set(shown.map(p=>p.platform)).size+' platforms · '+mediaType;
+    if(!shown.length){selectedPreset=null;document.getElementById('presetDetail').textContent='Try another platform or search.';document.getElementById('previewBtn').textContent='Choose a template';document.getElementById('previewBtn').disabled=true;const empty=document.createElement('p');empty.className='preset-empty';empty.textContent='No matching templates for this media type.';destinations.appendChild(empty);return;}
+    if(!shown.some(p=>selectedPreset?.id===p.id))selectedPreset=shown[0];
+    for(const p of shown){
+      const button=document.createElement('button');button.type='button';button.className='destination';button.dataset.presetId=p.id;button.setAttribute('role','radio');
+      const icon=document.createElement('span');icon.className='ratio-icon';icon.textContent=aspectLabel(p.width,p.height);
+      const info=document.createElement('span');const name=document.createElement('strong');name.textContent=p.platform+' · '+p.name;
+      const small=document.createElement('small');small.textContent=p.width+' × '+p.height+' px';info.append(name,small);
+      const dot=document.createElement('span');dot.className='radio';dot.setAttribute('aria-hidden','true');
+      button.append(icon,info,dot);button.addEventListener('click',()=>{choosePreset(p);acknowledge(p.platform+' '+p.name+' selected');});
+      destinations.appendChild(button);
+    }
+    choosePreset(selectedPreset);
+  }
+  for(const platform of [...new Set(presets.map(p=>p.platform))].sort((a,b)=>a.localeCompare(b))){const opt=document.createElement('option');opt.value=platform;opt.textContent=platform;platformFilter.appendChild(opt);}
+  platformFilter.addEventListener('change',renderPresets);
+  presetSearch.addEventListener('input',renderPresets);
+  renderPresets();
 
   function goTo(n){ stages.forEach((s,i)=>s.classList.toggle('active',i===n-1)); bars.forEach((b,i)=>b.className=i<n-1?'done':i===n-1?'active':''); }
   function showUploadStatus(message,isError=false){
@@ -560,6 +614,7 @@ function constrainFrame(){
     if(url)URL.revokeObjectURL(url);
     url=URL.createObjectURL(file);
     mediaType=video?'video':'image';
+    platformFilter.value='all';presetSearch.value='';selectedPreset=null;renderPresets();
     savedCrop=null;sourceWidth=sourceHeight=duration=0;probeReady=false;
     document.getElementById('previewBtn').disabled=true;
     populate(document.getElementById('sourceThumb'));
@@ -647,10 +702,9 @@ function constrainFrame(){
   window.addEventListener('blur',hideDropOverlay);
 
 
-  destinations.forEach(item=>item.addEventListener('click',()=>{destinations.forEach(d=>{d.classList.remove('selected');d.setAttribute('aria-checked','false')});item.classList.add('selected');item.setAttribute('aria-checked','true');ratio=item.dataset.ratio;format=item.dataset.format;destination=item.dataset.label;document.getElementById('previewBtn').textContent='Preview for '+destination.replace('Reels, TikTok or Shorts','Reels');acknowledge(destination+' selected');}));
-
-document.getElementById('previewBtn').addEventListener('click',()=>{
-    if(!probeReady)return;
+  destinations.addEventListener('keydown',event=>{if(!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(event.key))return;const opts=[...destinations.querySelectorAll('.destination')];const n=opts.indexOf(document.activeElement);if(n<0)return;event.preventDefault();const next=opts[(n+(event.key==='ArrowDown'||event.key==='ArrowRight'?1:-1)+opts.length)%opts.length];next.focus();next.click();});
+  document.getElementById('previewBtn').addEventListener('click',()=>{
+    if(!probeReady||!selectedPreset)return;
     cropWindow.querySelectorAll('img,video').forEach(e=>e.remove());
     const el=makeMedia();cropWindow.prepend(el);
     zoom=1;x=0;y=0;savedCrop=null;
@@ -670,6 +724,7 @@ document.getElementById('useFrameBtn').addEventListener('click',()=>{
     document.getElementById('finalName').textContent=file.name;
     document.getElementById('finalMeta').textContent=format+' · '+destination+(mediaType==='video'?' · '+formatTime(trim.end-trim.start):'');
     document.getElementById('finalRatio').textContent=format;
+    document.getElementById('finalPixels').textContent=selectedPreset.width+' × '+selectedPreset.height;
     savedCrop=cropGeometry();
     goTo(4);acknowledge('Framing accepted');
   });
@@ -678,7 +733,8 @@ document.getElementById('useFrameBtn').addEventListener('click',()=>{
 function cropGeometry(){
     if(!sourceWidth||!sourceHeight)throw new Error('Media dimensions are unavailable.');
     constrainFrame();
-    const [outW,outH]=outputSizes[ratio];
+    if(!selectedPreset)throw new Error('Choose an output template.');
+    const [outW,outH]=[selectedPreset.width,selectedPreset.height];
     const cw=cropWindow.clientWidth,ch=cropWindow.clientHeight;
     if(!cw||!ch){if(savedCrop)return savedCrop;throw new Error('The crop preview is not ready.');}
     const scale=Math.max(cw/sourceWidth,ch/sourceHeight)*zoom;
@@ -766,7 +822,8 @@ async function processVideo(){
 
   function showResult(result){
     resultBlob=result.blob;
-    resultName=(file.name.replace(/\.[^.]+$/,'')||'creatoready')+'-'+format.replace(':','x')+'.'+result.extension;
+    const presetSlug=(selectedPreset.platform+'-'+selectedPreset.name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    resultName=(file.name.replace(/\.[^.]+$/,'')||'creatoready')+'-'+presetSlug+'-'+selectedPreset.width+'x'+selectedPreset.height+'.'+result.extension;
     resultUrl=URL.createObjectURL(resultBlob);
     const preview=document.getElementById('resultPreview');
     const el=document.createElement(mediaType==='video'?'video':'img');
@@ -808,9 +865,8 @@ async function processVideo(){
     if(ffmpeg)resetEngine();
     input.value='';file=null;duration=0;sourceWidth=0;sourceHeight=0;probeReady=false;
     mediaType='image';zoom=1;x=0;y=0;savedCrop=null;
-    ratio='9/16';format='9:16';destination='Reels, TikTok or Shorts';
-    destinations.forEach((item,index)=>{item.classList.toggle('selected',index===0);item.setAttribute('aria-checked',index===0?'true':'false');});
-    document.getElementById('previewBtn').textContent='Preview for Reels';
+    ratio='9/16';format='9:16';destination='';selectedPreset=null;
+    platformFilter.value='all';presetSearch.value='';renderPresets();
     document.getElementById('previewBtn').disabled=true;
     cropWindow.querySelectorAll('img,video').forEach(el=>el.remove());
     document.getElementById('sourceThumb').replaceChildren();
