@@ -13,13 +13,32 @@ A browser-based image and video editor for cropping, resizing and trimming. It r
 ## Usage and acceptance checks
 
 1. Choose JPG/PNG or a browser-supported video (e.g. MP4).
-2. Select 9:16, 4:5, or 1:1, drag the crop preview and zoom.
+2. Filter by platform and search among 65 platform/placement presets across 22 platform families; choose a compatible image or video template and adjust the crop preview and zoom.
 3. For video, enter start and end timestamps (e.g. 00:40 to 01:05).
 4. Export and check downloaded output for dimensions, framing, trimmed duration, audio, and playability.
 5. Check browser console for any network error while loading the wasm core.
-6. Test on the actual GitHub Pages URL with a short clip before relying on longer files.
+6. Test on the active authenticated Cloudflare Worker URL with a short clip before relying on longer files; GitHub Pages does not enforce protected access.
 
 Video encoding is computationally intensive and loads the entire input into browser memory. Use short, reasonably sized clips; large files may exceed browser memory. Browsers must be able to decode the input's metadata. The source is never modified.
+
+## Social media export templates
+
+The editor includes 65 selectable aspect-ratio and resolution templates across 22 platform families: Instagram, Facebook, TikTok, YouTube, X, Threads, LinkedIn, Pinterest, Snapchat, WhatsApp, Telegram, Reddit, Bluesky, Discord, Twitch, Tumblr, Lemon8, Mastodon, LINE, Kwai, Vimeo and General.
+
+- Upload one image or video. Step 2 shows only templates applicable to that media type.
+- Filter by platform or search a format such as `Reels`, `Shorts`, `Pin`, `feed` or `banner`.
+- Pick a specific placement. The preview uses that shape and image/FFmpeg output uses the selected *exact* width and height.
+- On the confirmation screen, check the aspect ratio and target pixel dimensions.
+- The downloaded file name includes the platform, placement and output dimensions.
+- Templates are **starting canvases**, not endorsements or guarantees of upload eligibility. Platform file-size limits, durations, safe zones, ad placement rules and crop displays can change. Users should inspect their final output before posting. Channel banners may be cropped differently on different devices. Carousels still require a separate export per card.
+- Large 1080p exports or 2560×1440 canvases may be slow or fail on low-memory devices; the browser-based FFmpeg runtime has inherent memory limits.
+- These are size/placement presets only; CreatorReady does not yet offer full graphic design templates, text overlays or per-platform UI safe zone masks.
+
+To check the catalog and source wiring:
+
+```sh
+node --test tests/social-presets.test.mjs
+```
 
 ## Third-party license
 
