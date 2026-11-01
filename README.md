@@ -4,7 +4,7 @@ A browser-based image and video editor for cropping, resizing and trimming. It r
 
 ## Hosting
 
-- Publish the repository root on the `main` branch with GitHub Pages, or deploy to Cloudflare Pages as a static folder.
+- The launch site uses the authenticated Cloudflare Worker in `worker/access.mjs`. Disable unprotected GitHub Pages for the X-only promotional campaign; GitHub Pages cannot enforce a signed access cookie.
 - All local paths (including the manifest and service worker) are relative, so a GitHub Pages project URL such as `/CREATOREADY/` works.
 - The bundled `vendor/ffmpeg/ffmpeg.js` and `814.ffmpeg.js` are the MIT-licensed FFmpeg.wasm UMD browser wrapper v0.12.15; these are hosted alongside the page because Web Workers must be same-origin.
 - The single-thread FFmpeg core JS and ~32 MB WASM are downloaded on first video export from pinned jsDelivr package `@ffmpeg/core@0.12.10`. The browser caches responses when storage permits.
