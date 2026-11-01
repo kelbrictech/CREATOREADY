@@ -152,3 +152,7 @@ node --test tests/access-worker.test.mjs tests/ffmpeg-security.test.mjs
 ```
 
 GitHub Pages deployment alone does not validate Cloudflare Workers or its secrets. Never claim the link gate is live until the Cloudflare deployment and HTTP behavior are verified.
+
+### Cloudflare asset HTML routing
+
+Cloudflare's default `assets.html_handling` redirects `/privacy.html` to `/privacy` (HTTP 307). Our public legal allow-list intentionally uses explicit `.html` names. The Worker therefore sets `assets.html_handling: none`, and explicitly serves `/index.html` to an authenticated request for `/`. Public legal notices should return HTTP 200 without a cookie; editor routes and vendor files must return HTTP 401 without a cookie. GitHub Actions runs unit tests and a public Cloudflare live smoke test.

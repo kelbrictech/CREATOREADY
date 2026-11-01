@@ -37,7 +37,7 @@ test('only exact entry link can mint a 24-hour session', async () => {
   const cookie = setCookie.split(';')[0];
   const editor = await call('/', cookie);
   assert.equal(editor.status, 200);
-  assert.match(await editor.text(), /ASSET \/$/);
+  assert.match(await editor.text(), /ASSET \/index\.html$/);
   assert.equal(editor.headers.get('cache-control'), 'private, no-store, max-age=0');
 });
 test('signed session expires after 24 hours, never sliding', async () => {
@@ -57,4 +57,12 @@ test('referrer is irrelevant and all responses forbid caching', async () => {
   assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
   assert.equal(response.headers.get('cache-control'), 'private, no-store, max-age=0');
   assert.ok(response.headers.get('content-security-policy').includes("'wasm-unsafe-eval'"));
+});
+
+test('legal .html paths stay public with explicit Cloudflare HTML filenames', async () => {
+  for (const path of ['/privacy.html','/terms.html','/legal.html','/cookies.html']) {
+    const response=await call(path);
+    assert.equal(response.status, 200, path);
+    assert.equal(await response.text(), 'ASSET ' + path);
+  }
 });

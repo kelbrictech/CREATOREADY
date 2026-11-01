@@ -120,7 +120,12 @@ export default {
       if (!valid) return errorPage('Access expired or not yet granted', 'Open the special CREATO’READY link in the X post again to start a new 24-hour session.', 401);
     }
     if (!env.ASSETS?.fetch) return errorPage('Temporarily unavailable', 'The editor assets are not configured.', 503);
-    const asset = await env.ASSETS.fetch(request);
+    // Explicit HTML filenames must remain accessible to unauthenticated visitors.
+    // Cloudflare automatic HTML handling would redirect /privacy.html to /privacy.
+    const assetRequest = path === '/'
+      ? new Request(new URL('/index.html', url), request)
+      : request;
+    const asset = await env.ASSETS.fetch(assetRequest);
     const headers = new Headers(asset.headers);
     // Asset responses go through Worker code first: Cloudflare _headers is not automatically applied.
     for (const [key, value] of Object.entries(SECURITY_HEADERS)) headers.set(key, value);
