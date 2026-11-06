@@ -887,7 +887,7 @@ async function processVideo(){
         // Prevent copying source global/stream metadata and chapters. The muxer may still add technical encoder tags.
         '-map_metadata','-1','-map_metadata:s','-1','-map_chapters','-1',
         '-metadata','title=','-metadata','creation_time=',
-        '-movflags','+faststart',outputName];
+        '-movflags','+faststart',outputName);
       setProgress(25,'Processing video','Trimming, cropping and resizing on this device');
       const code=await ffmpeg.exec(args);
       if(cancelRequested)throw new DOMException('Cancelled','AbortError');
