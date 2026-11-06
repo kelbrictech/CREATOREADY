@@ -4,7 +4,7 @@ A browser-based image and video editor for cropping, resizing and trimming. It r
 
 ## Hosting
 
-- The launch site uses the authenticated Cloudflare Worker in `worker/access.mjs`. Disable unprotected GitHub Pages for the X-only promotional campaign; GitHub Pages cannot enforce a signed access cookie.
+- The launch site uses the public Cloudflare Worker in `worker/access.mjs`. The Worker serves the static application and applies security headers; no X-link login or visitor session is required.
 - All local paths (including the manifest and service worker) are relative, so a GitHub Pages project URL such as `/CREATOREADY/` works.
 - The bundled `vendor/ffmpeg/ffmpeg.js` and `814.ffmpeg.js` are the MIT-licensed FFmpeg.wasm UMD browser wrapper v0.12.15; these are hosted alongside the page because Web Workers must be same-origin.
 - The single-thread FFmpeg core JS and ~32 MB WASM are downloaded on first video export from pinned jsDelivr package `@ffmpeg/core@0.12.10`. The browser caches responses when storage permits.
@@ -17,7 +17,7 @@ A browser-based image and video editor for cropping, resizing and trimming. It r
 3. For video, enter start and end timestamps (e.g. 00:40 to 01:05).
 4. Export and check downloaded output for dimensions, framing, trimmed duration, audio, and playability.
 5. Check browser console for any network error while loading the wasm core.
-6. Test on the active authenticated Cloudflare Worker URL with a short clip before relying on longer files; GitHub Pages does not enforce protected access.
+6. Test on the public Cloudflare Worker URL with a short clip before relying on longer files; GitHub Pages does not enforce protected access.
 
 Video encoding is computationally intensive and loads the entire input into browser memory. Use short, reasonably sized clips; large files may exceed browser memory. Browsers must be able to decode the input's metadata. The source is never modified.
 
@@ -142,36 +142,26 @@ node --test tests/ffmpeg-security.test.mjs
 - Click, Enter, Space and mobile tap file-selection methods remain available.
 - Browser checks: drag a valid MP4 to upload, select an image by clicking, drop unsupported text, drop multiple files, try drop before agreeing, try drop during export, replace the current source by dropping again, confirm drop indicator hides on leaving the window, and confirm dropped files never navigate away.
 
-## Cloudflare Workers: protected X entry and 24-hour access
+## Cloudflare Workers: public deployment
 
-Deployment uses `worker/access.mjs` and `wrangler.jsonc`, with `assets.run_worker_first=true` to authenticate every editor and vendor asset request before it is returned. The Worker name is `creatoready` to match the existing `creatoready.kelbrictech.workers.dev` hostname.
+The production site is served publicly by the existing `creatoready` Cloudflare Worker at `https://creatoready.kelbrictech.workers.dev`. The Worker serves the repository's static assets and applies the site's security headers.
 
-- Publish one stable shared link in your X post: `https://creatoready.kelbrictech.workers.dev/x/<ACCESS_LINK_TOKEN>`.
-- A valid link sets the strictly necessary `__Host-creatoready_access` cookie, Secure/HttpOnly/SameSite=Lax/Path=/, Max-Age 86400 seconds (24 hours).
-- The Worker cryptographically signs a stateless session using a distinct secret (`SESSION_SIGNING_KEY`). It stores no visitor name, IP, email or analytics event.
-- Opening protected URLs without a valid cookie returns 401. Legal documents remain publicly readable. Session expiry is fixed: navigating or downloading during the window does not extend it.
-- After 24 hours, users must open the link again for a fresh cookie. Because the original link is public and can be bookmarked or forwarded, this cannot prove the user clicked through X.
-- All protected responses are `private, no-store`. The legacy service worker is retired and old `creatoready-*` caches are deleted where possible. Already-downloaded editor files cannot be remotely erased.
-- No secrets are checked into GitHub. **Do not publish the token until secrets are configured and the live Worker has been tested**.
-- The access gateway fails closed if either secret is missing or weak.
+- No X promotional link, access cookie, visitor session, or Cloudflare Access login is required.
+- The former `/x/<ACCESS_LINK_TOKEN>` campaign entry route is retired and returns HTTP 404.
+- The editor, FFmpeg vendor assets, manifest, service worker, and legal pages are publicly accessible.
+- Media editing remains client-side; uploaded media is not sent to the Worker.
+- The Worker keeps restrictive Content Security Policy and cross-origin isolation headers needed by FFmpeg.wasm.
+- HTML and the service worker revalidate; fingerprint-like static assets under `/assets/` and `/icons/` use long-lived public caching.
+- The Worker remains configured through `wrangler.jsonc` with `assets.run_worker_first=true` so its response headers are consistently applied.
 
-### Cloudflare setup (required manual account authorization)
+### Deployment
 
-1. In the existing `creatoready` Worker, configure production encrypted secrets `ACCESS_LINK_TOKEN` and `SESSION_SIGNING_KEY`. Generate each independently with at least 32 cryptographically random bytes encoded as base64url using Node: `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"`. Store the outputs securely; **do not commit them**.
-2. Deploy the repository with `npx wrangler deploy` from an authorized machine, or connect its main branch in Cloudflare Workers → Settings → Builds, ensuring the Worker name matches `creatoready`. The Worker must run before assets for the gate to work.
-3. Publish `https://creatoready.kelbrictech.workers.dev/x/<ACCESS_LINK_TOKEN>` in the X post. Replace the bracketed placeholder with the first secret.
-4. **Disable GitHub Pages** for `kelbrictech/CREATOREADY` in GitHub Settings → Pages. GitHub Pages cannot enforce server-side cookies. A convenience redirect on its index is not a security control. Do not advertise exclusive access until the Pages origin is disabled.
-5. Verify Cloudflare HTTP responses: public legal pages, 401 without a cookie, 303 + session cookie from the X link, authorized editor assets, fixed 24-hour expiry, production CSP, and real video export.
-6. Change `ACCESS_LINK_TOKEN` to revoke the public entry link; rotate `SESSION_SIGNING_KEY` to invalidate already issued sessions. Updating the token requires updating the X post/link.
+The production Worker name is `creatoready`, matching the existing `creatoready.kelbrictech.workers.dev` hostname. Deploy the `main` branch through the connected Cloudflare Workers build integration, or run `npx wrangler deploy` from an authorized environment.
 
 ### Regression tests
 
 ```sh
-node --test tests/access-worker.test.mjs tests/ffmpeg-security.test.mjs
+node --test tests/access-worker.test.mjs tests/ffmpeg-security.test.mjs tests/social-presets.test.mjs
 ```
 
-GitHub Pages deployment alone does not validate Cloudflare Workers or its secrets. Never claim the link gate is live until the Cloudflare deployment and HTTP behavior are verified.
-
-### Cloudflare asset HTML routing
-
-Cloudflare's default `assets.html_handling` redirects `/privacy.html` to `/privacy` (HTTP 307). Our public legal allow-list intentionally uses explicit `.html` names. The Worker therefore sets `assets.html_handling: none`, and explicitly serves `/index.html` to an authenticated request for `/`. Public legal notices should return HTTP 200 without a cookie; editor routes and vendor files must return HTTP 401 without a cookie. GitHub Actions runs unit tests and a public Cloudflare live smoke test.
+The live smoke test verifies that the editor and its static dependencies return HTTP 200 without a session, legal pages remain public, and the retired X entry route returns HTTP 404. A successful build alone does not replace an actual browser check of image editing and video export.
