@@ -3,29 +3,33 @@ import assert from 'node:assert/strict';
 
 const BASE = 'https://creatoready.kelbrictech.workers.dev';
 const EXPECTED = [
-  ['direct editor must be denied', '/', 401],
-  ['HTML source must be denied', '/index.html', 401],
-  ['video-engine file must be denied', '/vendor/ffmpeg/ffmpeg.js', 401],
-  ['privacy notice must remain public', '/privacy.html', 200],
-  ['terms must remain public', '/terms.html', 200],
-  ['invalid promotional link must fail', '/x/invalid-test-link-do-not-use', 404]
+  ['public editor root', '/', 200],
+  ['public HTML entry', '/index.html', 200],
+  ['public video-engine file', '/vendor/ffmpeg/ffmpeg.js', 200],
+  ['privacy notice', '/privacy.html', 200],
+  ['terms', '/terms.html', 200],
+  ['retired X promotional entry', '/x/invalid-test-link-do-not-use', 404]
 ];
 
 async function probe(path, timeoutMs = 12000) {
-  const res = await fetch(BASE + path, { redirect: 'manual', cache: 'no-store',
+  const res = await fetch(BASE + path, {
+    redirect: 'manual',
+    cache: 'no-store',
     signal: AbortSignal.timeout(timeoutMs),
-    headers: { 'User-Agent': 'CREATOREADY-DeploymentSmokeTest/1.0' } });
+    headers: { 'User-Agent': 'CREATOREADY-DeploymentSmokeTest/1.0' }
+  });
   const csp = res.headers.get('content-security-policy') || '';
   return {
     status: res.status,
     cacheControl: res.headers.get('cache-control') || '',
     hasCSP: !!csp,
     hasBlobScript: csp.includes('blob:'),
-    hasWasmPermission: csp.includes("'wasm-unsafe-eval'")
+    hasWasmPermission: csp.includes("'wasm-unsafe-eval'"),
+    hasNoIndex: /noindex/i.test(res.headers.get('x-robots-tag') || '')
   };
 }
 
-test('production Cloudflare gateway refuses direct access and exposes legal pages', { timeout: 150000 }, async () => {
+test('production Cloudflare deployment is public and serves protected assets without a login link', { timeout: 150000 }, async () => {
   let last = [];
   for (let attempt = 1; attempt <= 6; attempt++) {
     const observed = await Promise.all(EXPECTED.map(async ([name, path, expected]) => {
@@ -39,10 +43,11 @@ test('production Cloudflare gateway refuses direct access and exposes legal page
     last = observed;
     const allExpected = observed.every(row =>
       row.status === row.expected &&
-      row.cacheControl.includes('no-store') &&
+      !!row.cacheControl &&
       row.hasCSP &&
       row.hasBlobScript &&
-      row.hasWasmPermission
+      row.hasWasmPermission &&
+      !row.hasNoIndex
     );
     if (allExpected) {
       for (const row of observed) console.log('PASS', row.name, row.status);
@@ -53,7 +58,7 @@ test('production Cloudflare gateway refuses direct access and exposes legal page
     }))));
     if (attempt < 6) await new Promise(resolve => setTimeout(resolve, 15000));
   }
-  assert.fail('Cloudflare live smoke test not yet passing; last observations: ' +
+  assert.fail('Cloudflare public deployment smoke test not yet passing; last observations: ' +
     JSON.stringify(last.map(row => ({
       path: row.path, expected: row.expected, actual: row.status, error: row.error,
       hasCSP: row.hasCSP, cacheControl: row.cacheControl
