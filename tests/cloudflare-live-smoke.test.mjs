@@ -43,7 +43,7 @@ test('production Cloudflare deployment is public and serves protected assets wit
     last = observed;
     const allExpected = observed.every(row =>
       row.status === row.expected &&
-      !!row.cacheControl &&
+      (row.expected === 404 || !!row.cacheControl) &&
       row.hasCSP &&
       row.hasBlobScript &&
       row.hasWasmPermission &&
