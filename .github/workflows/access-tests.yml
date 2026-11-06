@@ -11,4 +11,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/access-worker.test.mjs tests/ffmpeg-security.test.mjs tests/social-presets.test.mjs
+      - run: node --test tests/access-worker.test.mjs tests/ffmpeg-security.test.mjs tests/social-presets.test.mjs tests/watermark.test.mjs
