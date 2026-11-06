@@ -875,12 +875,12 @@ async function processVideo(){
         await ffmpeg.writeFile(watermarkName,new Uint8Array(await png.arrayBuffer()));
         args.push('-loop','1','-i',watermarkName);
       }
-      args.push('-t',String(trim.end-trim.start),'-map');
+      args.push('-t',String(trim.end-trim.start));
       if(watermark.enabled){
         const cropScale=`crop=${cropW}:${cropH}:${cropX}:${cropY},scale=${g.outW}:${g.outH}:flags=lanczos,setsar=1`;
-        args.push('0:v:0','-filter_complex',`[0:v]${cropScale}[base];[1:v]format=rgba[wm];[base][wm]overlay=0:0:format=auto:eof_action=repeat[vout]`,'-map','[vout]');
+        args.push('-filter_complex',`[0:v]${cropScale}[base];[1:v]format=rgba[wm];[base][wm]overlay=0:0:format=auto:eof_action=repeat[vout]`,'-map','[vout]');
       }else{
-        args.push('0:v:0','-vf',`crop=${cropW}:${cropH}:${cropX}:${cropY},scale=${g.outW}:${g.outH}:flags=lanczos,setsar=1`);
+        args.push('-map','0:v:0','-vf',`crop=${cropW}:${cropH}:${cropX}:${cropY},scale=${g.outW}:${g.outH}:flags=lanczos,setsar=1`);
       }
       args.push('-map','0:a?','-c:v','libx264','-preset','ultrafast','-crf','23','-pix_fmt','yuv420p',
         '-c:a','aac','-b:a','128k',
