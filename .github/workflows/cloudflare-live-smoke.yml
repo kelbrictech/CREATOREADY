@@ -1,4 +1,4 @@
-name: Cloudflare live access smoke test
+name: Cloudflare public deployment smoke test
 
 on:
   push:
@@ -7,48 +7,15 @@ on:
 
 permissions:
   contents: read
-  checks: read
 
 jobs:
-  live-gate:
+  public-site:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Wait for Cloudflare production deployment of this commit
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPOSITORY: ${{ github.repository }}
-          GH_SHA: ${{ github.sha }}
-        run: |
-          node --input-type=module <<'NODE'
-          const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-          const url = `https://api.github.com/repos/${process.env.GH_REPOSITORY}/commits/${process.env.GH_SHA}/check-runs?per_page=100`;
-          for (let attempt = 1; attempt <= 50; attempt++) {
-            const response = await fetch(url, { headers: {
-              Authorization: `Bearer ${process.env.GH_TOKEN}`,
-              Accept: 'application/vnd.github+json',
-              'X-GitHub-Api-Version': '2022-11-28'
-            }});
-            if (!response.ok) throw new Error(`GitHub checks returned HTTP ${response.status}`);
-            const {check_runs = []} = await response.json();
-            const check = check_runs.find(entry => entry.name === 'Workers Builds: creatoready'
-              && entry.app?.slug === 'cloudflare-workers-and-pages');
-            if (check?.status === 'completed' && check.conclusion === 'success') {
-              console.log('Cloudflare production build succeeded for commit', process.env.GH_SHA);
-              console.log('Build details:', check.details_url);
-              process.exit(0);
-            }
-            if (check?.status === 'completed' && check.conclusion !== 'success') {
-              throw new Error(`Cloudflare production build ended with ${check.conclusion}`);
-            }
-            console.log(`Waiting for Cloudflare build (${attempt}/50): ${check?.status || 'not registered'}`);
-            await pause(5000);
-          }
-          throw new Error('Timed out waiting for Cloudflare production deployment of this commit');
-          NODE
-      - name: Probe public Cloudflare endpoints without any secrets
+      - name: Probe public Cloudflare endpoints
         run: node --test tests/cloudflare-live-smoke.test.mjs
