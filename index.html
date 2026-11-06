@@ -293,6 +293,24 @@
   .trim-help { margin:9px 0 0; color:#a9a2bd; font-size:11px; line-height:1.45; }
   .trim-error { margin:9px 0 0; color:#ffbdb6; font-size:12px; }
   .trim-error[hidden] { display:none; }
+  .watermark-panel{flex-shrink:0;margin-top:12px;padding:13px 14px}
+  .watermark-head{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#f7f4ff;font-size:13px;font-weight:700}
+  .watermark-toggle{display:flex;align-items:center;gap:9px;color:#d9d4e4;font-size:12px}
+  .watermark-toggle input{width:17px;height:17px;accent-color:#8c78ff}
+  .watermark-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
+  .watermark-fields label{display:grid;gap:6px;min-width:0;color:#c8c2d8;font-size:11px}
+  .watermark-fields input[type=text],.watermark-fields select{width:100%;min-width:0;min-height:38px;padding:8px 10px;border:1px solid rgba(120,203,255,.35);border-radius:10px;color:#fff;background:#171529;font:inherit;font-size:12px}
+  .watermark-opacity{grid-column:1/-1;display:flex!important;align-items:center;gap:10px!important}
+  .watermark-opacity input{width:100%;accent-color:#8c78ff}
+  .watermark-opacity output{min-width:34px;text-align:right;color:#e6e0f4;font:11px ui-monospace,monospace}
+  .watermark-help{margin:9px 0 0;color:#a9a2bd;font-size:10px;line-height:1.4}
+  #watermarkOptions:disabled{opacity:.45}
+  .crop-watermark{position:absolute;z-index:4;max-width:90%;color:#fff;font-weight:800;font-size:clamp(12px,4vw,22px);line-height:1.1;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;text-shadow:-1px -1px 0 rgba(0,0,0,.85),1px -1px 0 rgba(0,0,0,.85),-1px 1px 0 rgba(0,0,0,.85),1px 1px 0 rgba(0,0,0,.85),0 2px 9px rgba(0,0,0,.8)}
+  .crop-watermark[data-position="bottom-right"]{right:4.5%;bottom:4.5%}
+  .crop-watermark[data-position="bottom-left"]{left:4.5%;bottom:4.5%}
+  .crop-watermark[data-position="top-right"]{right:4.5%;top:4.5%}
+  .crop-watermark[data-position="top-left"]{left:4.5%;top:4.5%}
+  .crop-watermark[data-position="center"]{left:50%;top:50%;transform:translate(-50%,-50%)}
 
 .agreement-gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;overflow:auto;padding:16px;background:radial-gradient(ellipse at 25% 0%,#203b83 0%,transparent 57%),radial-gradient(ellipse at 90% 95%,#361b59 0%,transparent 42%),#070a19;color:#f6f4ff;font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
 .agreement-gate[hidden]{display:none!important}
@@ -406,7 +424,7 @@ body.agreement-required{overflow:hidden}
         <div class="stage-heading"><button class="back-control" data-back="2" aria-label="Return to destination">←</button><h1>Set the frame.</h1></div>
         <p class="lede" style="margin-bottom:13px">Drag the media until the important part is visible.</p>
         <div class="glass frame-stage" id="frameStage">
-          <div class="crop-window" id="cropWindow"><div class="drag-hint">Drag to reposition</div></div>
+          <div class="crop-window" id="cropWindow"><div class="drag-hint">Drag to reposition</div><span class="crop-watermark" id="cropWatermark" hidden aria-hidden="true"></span></div>
         </div>
         <div class="zoom-row"><button class="zoom-button" id="zoomOut" aria-label="Zoom out">−</button><span id="zoomLabel">100% zoom</span><button class="zoom-button" id="zoomIn" aria-label="Zoom in">+</button></div>
         <div class="glass-dim trim-panel" id="trimPanel">
@@ -417,6 +435,15 @@ body.agreement-required{overflow:hidden}
           </div>
           <p class="trim-help">Use MM:SS or HH:MM:SS. Export includes only this segment.</p>
           <p class="trim-error" id="trimError" role="alert" hidden></p>
+        </div>
+        <div class="glass-dim watermark-panel" id="watermarkPanel">
+          <div class="watermark-head"><span>Watermark</span><label class="watermark-toggle"><input type="checkbox" id="watermarkEnabled"> Add watermark</label></div>
+          <fieldset class="watermark-fields" id="watermarkOptions" disabled>
+            <label for="watermarkText" style="grid-column:1/-1">Watermark text<input id="watermarkText" type="text" maxlength="40" value="CREATO’READY" autocomplete="off" spellcheck="false"></label>
+            <label for="watermarkPosition">Position<select id="watermarkPosition"><option value="bottom-right">Bottom right</option><option value="bottom-left">Bottom left</option><option value="top-right">Top right</option><option value="top-left">Top left</option><option value="center">Center</option></select></label>
+            <label class="watermark-opacity" for="watermarkOpacity"><span>Opacity</span><input id="watermarkOpacity" type="range" min="10" max="100" step="5" value="75"><output id="watermarkOpacityValue" for="watermarkOpacity">75%</output></label>
+          </fieldset>
+          <p class="watermark-help">Previewed here and permanently applied to exported photos and videos. Leave off for a clean export.</p>
         </div>
         <button class="primary" id="useFrameBtn">Use this framing</button>
       </section>
@@ -429,9 +456,9 @@ body.agreement-required{overflow:hidden}
         <div class="glass ready-card">
           <div class="ready-mark" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg></div>
           <h2>Your framing is ready.</h2>
-          <p>No watermark. No account. Your file stays on this device.</p>
+          <p id="exportSummary">No watermark. No account. Your file stays on this device.</p>
         </div>
-        <div class="specs"><div class="glass-dim spec"><strong id="finalRatio">9:16</strong><span>FORMAT</span></div><div class="glass-dim spec"><strong id="finalPixels">1080 × 1920</strong><span>PIXELS</span></div><div class="glass-dim spec"><strong>No</strong><span>WATERMARK</span></div></div>
+        <div class="specs"><div class="glass-dim spec"><strong id="finalRatio">9:16</strong><span>FORMAT</span></div><div class="glass-dim spec"><strong id="finalPixels">1080 × 1920</strong><span>PIXELS</span></div><div class="glass-dim spec"><strong id="finalWatermark">Off</strong><span>WATERMARK</span></div></div>
         <details><summary>Export settings</summary><div class="glass-dim settings-panel">Video: MP4 (H.264) · Image: PNG/JPG<br>Quality: automatic<br>Audio: AAC when present</div></details>
         <div class="prototype-note" id="privacyNote">Processing happens in this browser. Video export loads the processing engine on first use.</div>
         <button class="primary" id="confirmBtn">Create resized media</button>
@@ -710,8 +737,14 @@ function constrainFrame(){
     zoom=1;x=0;y=0;savedCrop=null;
     document.getElementById('trimPanel').classList.toggle('show',mediaType==='video');
     document.getElementById('trimError').hidden=true;
+    updateWatermarkPreview();
     goTo(3);sizeCropWindow();acknowledge('Destination format applied');
   });
+  ['watermarkEnabled','watermarkText','watermarkPosition','watermarkOpacity'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',updateWatermarkPreview);
+    document.getElementById(id).addEventListener('change',updateWatermarkPreview);
+  });
+  updateWatermarkPreview();
   document.getElementById('zoomIn').addEventListener('click',()=>{zoom=Math.min(2,zoom+.1);updateTransform();acknowledge('Zoom updated')});
   document.getElementById('zoomOut').addEventListener('click',()=>{zoom=Math.max(1,zoom-.1);updateTransform();acknowledge('Zoom updated')});
   cropWindow.addEventListener('pointerdown',e=>{dragging=true;startX=e.clientX;startY=e.clientY;baseX=x;baseY=y;cropWindow.setPointerCapture(e.pointerId);document.getElementById('frameStage').classList.add('dragging')});
@@ -725,6 +758,7 @@ document.getElementById('useFrameBtn').addEventListener('click',()=>{
     document.getElementById('finalMeta').textContent=format+' · '+destination+(mediaType==='video'?' · '+formatTime(trim.end-trim.start):'');
     document.getElementById('finalRatio').textContent=format;
     document.getElementById('finalPixels').textContent=selectedPreset.width+' × '+selectedPreset.height;
+    updateWatermarkPreview();
     savedCrop=cropGeometry();
     goTo(4);acknowledge('Framing accepted');
   });
@@ -744,7 +778,44 @@ function cropGeometry(){
     return {sx,sy,sw,sh,outW,outH};
   }
   function waitForMedia(el,event){return new Promise((resolve,reject)=>{if((event==='load'&&el.complete)||(event==='loadedmetadata'&&el.readyState>=1))return resolve();el.addEventListener(event,resolve,{once:true});el.addEventListener('error',()=>reject(new Error('The selected media could not be decoded by this browser.')),{once:true});});}
-  async function processImage(){setProgress(12,'Reading image','Decoding the selected image');const img=new Image();img.src=url;await waitForMedia(img,'load');sourceWidth=img.naturalWidth;sourceHeight=img.naturalHeight;if(cancelRequested)throw new DOMException('Cancelled','AbortError');const g=cropGeometry();setProgress(48,'Applying frame','Cropping and resizing on this device');const canvas=document.createElement('canvas');canvas.width=g.outW;canvas.height=g.outH;const ctx=canvas.getContext('2d',{alpha:false});ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(img,g.sx,g.sy,g.sw,g.sh,0,0,g.outW,g.outH);setProgress(82,'Encoding image','Creating the downloadable file');const type=file.type==='image/png'?'image/png':'image/jpeg';const quality=type==='image/jpeg'?.9:undefined;const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('This browser could not create the image.')),type,quality));return {blob,extension:type==='image/png'?'png':'jpg'};}
+  function watermarkSettings(){
+    const enabled=document.getElementById('watermarkEnabled').checked;
+    const text=document.getElementById('watermarkText').value.trim().slice(0,40);
+    return {enabled:enabled&&!!text,text,position:document.getElementById('watermarkPosition').value,opacity:Number(document.getElementById('watermarkOpacity').value)/100};
+  }
+  function updateWatermarkPreview(){
+    const s=watermarkSettings(),preview=document.getElementById('cropWatermark');
+    document.getElementById('watermarkOptions').disabled=!document.getElementById('watermarkEnabled').checked;
+    preview.hidden=!s.enabled;preview.textContent=s.text;preview.dataset.position=s.position;preview.style.opacity=String(s.opacity);
+    document.getElementById('watermarkOpacityValue').textContent=Math.round(s.opacity*100)+'%';
+    document.getElementById('finalWatermark').textContent=s.enabled?'On':'Off';
+    document.getElementById('exportSummary').textContent=s.enabled
+      ? 'Watermark: '+s.text+' · '+s.position.replace('-',' ')+' · '+Math.round(s.opacity*100)+'% opacity. Your file stays on this device.'
+      : 'No watermark. No account. Your file stays on this device.';
+  }
+  function drawWatermark(ctx,width,height){
+    const s=watermarkSettings();if(!s.enabled)return;
+    let size=Math.max(18,Math.round(width*.035));const maxWidth=width*.91,margin=Math.round(width*.045);
+    ctx.save();ctx.globalAlpha=s.opacity;ctx.font='800 '+size+'px system-ui, sans-serif';
+    while(ctx.measureText(s.text).width>maxWidth&&size>12){size--;ctx.font='800 '+size+'px system-ui, sans-serif';}
+    ctx.textBaseline='alphabetic';
+    if(s.position.endsWith('left')){ctx.textAlign='left';}
+    else if(s.position.endsWith('right')){ctx.textAlign='right';}
+    else ctx.textAlign='center';
+    const x=s.position.endsWith('left')?margin:s.position.endsWith('right')?width-margin:width/2;
+    const y=s.position.startsWith('top')?margin+size:s.position.startsWith('bottom')?height-margin:height/2;
+    if(s.position==='center')ctx.textBaseline='middle';
+    ctx.lineJoin='round';ctx.lineWidth=Math.max(2,size*.09);ctx.strokeStyle='rgba(0,0,0,.8)';
+    ctx.shadowColor='rgba(0,0,0,.65)';ctx.shadowBlur=Math.max(3,size*.18);
+    ctx.strokeText(s.text,x,y,maxWidth);ctx.fillStyle='#fff';ctx.fillText(s.text,x,y,maxWidth);ctx.restore();
+  }
+  async function createWatermarkPng(width,height){
+    const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+    const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Could not prepare the video watermark layer.');
+    drawWatermark(ctx,width,height);
+    return await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Could not encode the watermark layer.')),'image/png'));
+  }
+  async function processImage(){setProgress(12,'Reading image','Decoding the selected image');const img=new Image();img.src=url;await waitForMedia(img,'load');sourceWidth=img.naturalWidth;sourceHeight=img.naturalHeight;if(cancelRequested)throw new DOMException('Cancelled','AbortError');const g=cropGeometry();setProgress(48,'Applying frame','Cropping and resizing on this device');const canvas=document.createElement('canvas');canvas.width=g.outW;canvas.height=g.outH;const ctx=canvas.getContext('2d',{alpha:false});ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(img,g.sx,g.sy,g.sw,g.sh,0,0,g.outW,g.outH);drawWatermark(ctx,g.outW,g.outH);setProgress(82,'Encoding image','Applying watermark and creating the downloadable file');const type=file.type==='image/png'?'image/png':'image/jpeg';const quality=type==='image/jpeg'?.9:undefined;const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('This browser could not create the image.')),type,quality));return {blob,extension:type==='image/png'?'png':'jpg'};}
 async function fetchAsBlobURL(url,mime){
     const response=await fetch(url,{cache:'force-cache'});
     if(!response.ok)throw new Error('Video engine download returned HTTP '+response.status+'.');
@@ -797,9 +868,21 @@ async function processVideo(){
       const cropH=Math.min(sourceHeight,Math.max(2,Math.floor(g.sh/2)*2));
       const cropX=Math.max(0,Math.min(sourceWidth-cropW,Math.floor(g.sx/2)*2));
       const cropY=Math.max(0,Math.min(sourceHeight-cropH,Math.floor(g.sy/2)*2));
-      const args=['-ss',String(trim.start),'-i',inputName,'-t',String(trim.end-trim.start),
-        '-map','0:v:0','-map','0:a?','-vf',`crop=${cropW}:${cropH}:${cropX}:${cropY},scale=${g.outW}:${g.outH}:flags=lanczos,setsar=1`,
-        '-c:v','libx264','-preset','ultrafast','-crf','23','-pix_fmt','yuv420p',
+      const watermark=watermarkSettings(),watermarkName='creatoready-watermark.png';
+      const args=['-ss',String(trim.start),'-i',inputName];
+      if(watermark.enabled){
+        const png=await createWatermarkPng(g.outW,g.outH);
+        await ffmpeg.writeFile(watermarkName,new Uint8Array(await png.arrayBuffer()));
+        args.push('-loop','1','-i',watermarkName);
+      }
+      args.push('-t',String(trim.end-trim.start),'-map');
+      if(watermark.enabled){
+        const cropScale=`crop=${cropW}:${cropH}:${cropX}:${cropY},scale=${g.outW}:${g.outH}:flags=lanczos,setsar=1`;
+        args.push('0:v:0','-filter_complex',`[0:v]${cropScale}[base];[1:v]format=rgba[wm];[base][wm]overlay=0:0:format=auto:eof_action=repeat[vout]`,'-map','[vout]');
+      }else{
+        args.push('0:v:0','-vf',`crop=${cropW}:${cropH}:${cropX}:${cropY},scale=${g.outW}:${g.outH}:flags=lanczos,setsar=1`);
+      }
+      args.push('-map','0:a?','-c:v','libx264','-preset','ultrafast','-crf','23','-pix_fmt','yuv420p',
         '-c:a','aac','-b:a','128k',
         // Prevent copying source global/stream metadata and chapters. The muxer may still add technical encoder tags.
         '-map_metadata','-1','-map_metadata:s','-1','-map_chapters','-1',
@@ -816,6 +899,7 @@ async function processVideo(){
       if(ffmpegLoaded){
         try{await ffmpeg.deleteFile(inputName);}catch{}
         try{await ffmpeg.deleteFile(outputName);}catch{}
+        try{await ffmpeg.deleteFile('creatoready-watermark.png');}catch{}
       }
     }
   }
@@ -874,6 +958,11 @@ async function processVideo(){
     document.getElementById('sourceName').textContent='Your media';
     document.getElementById('sourceMeta').textContent='Ready for framing';
     document.getElementById('trimPanel').classList.remove('show');
+    document.getElementById('watermarkEnabled').checked=false;
+    document.getElementById('watermarkText').value='CREATO’READY';
+    document.getElementById('watermarkPosition').value='bottom-right';
+    document.getElementById('watermarkOpacity').value='75';
+    updateWatermarkPreview();
     document.getElementById('processingDone').style.display='none';
     document.getElementById('editAnotherBtn').style.display='none';
     document.getElementById('changeAfterProcessing').style.display='none';
